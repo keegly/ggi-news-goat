@@ -38,17 +38,18 @@ async def get_news():
         r = h.request('GET', url)
         soup = BeautifulSoup(r.data, 'lxml')
         table = soup.find(id="MainContent_NewsList1_Table1_Table1")
-        row = table("tr")[1:] # skip header
-        cols = row[0].find_all("td")  # Equiv to .findAll("td")
+        rows = table("tr")[1:] # skip header
+        for tr in rows:
+            cols = tr("td")  # Equiv to .findAll("td")
      
-        headline = cols[5].string.strip()
-        link = 'http://www.stockwatch.com' + cols[5].a.get('href')
-        date = cols[0].string.strip()
+            headline = cols[5].string.strip()
+            link = 'http://www.stockwatch.com' + cols[5].a.get('href')
+            date = cols[0].string.strip()
 
-        news = news_item(headline, link, date)
-        if news not in news_list:
-            news_list.append(news)
-            await client.send_message(channel, '{} - {} ({})'.format(date, headline, link))
+            news = news_item(headline, link, date)
+            if news not in news_list:
+                news_list.append(news)
+                await client.send_message(channel, '{} - {} ({})'.format(date, headline, link))
             
         await asyncio.sleep(60)
 
@@ -59,6 +60,19 @@ async def on_ready():
     print(client.user.id)
     print('-------')
 
+@client.event
+async def on_message(message):
+    if message.content.startswith('.news'):
+        print("Printing 5 most recent news releases")
+        output = ""
+        for nr in news_list[-5:]:
+            # post the most recent 5 items
+            output += '{} - {} ({})\n'.format(nr.date, nr.headline, nr.link)
+        await client.send_message(message.channel, output)
+
+    elif message.content.startswith('!sleep'):
+        await asyncio.sleep(5)
+        await client.send_message(message.channel, 'Done sleeping')
 
 client.loop.create_task(get_news())
 client.run(token)
