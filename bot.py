@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from yahoo_finance import Share
 from bs4 import BeautifulSoup
 import asyncio
 import datetime

@@ -1,4 +1,5 @@
 discord.py
+beautifulsoup4
 aiohttp
 websockets
 chardet
