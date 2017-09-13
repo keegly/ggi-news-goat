@@ -50,7 +50,7 @@ async def get_news():
             if news not in news_list:
                 news_list.append(news)
                 await client.send_message(channel, '{} - {} ({})'.format(date, headline, link))
-            
+        
         await asyncio.sleep(60)
 
 @client.event
@@ -63,16 +63,18 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if message.content.startswith('.news'):
-        print("Printing 5 most recent news releases")
+        print("Printing 5 most recent news releases for {} ({})".format(message.author.nick, message.author))
         output = ""
-        for nr in news_list[-5:]:
+        for nr in news_list[:5]:
             # post the most recent 5 items
             output += '{} - {} ({})\n'.format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
-    elif message.content.startswith('!sleep'):
-        await asyncio.sleep(5)
-        await client.send_message(message.channel, 'Done sleeping')
+    elif message.content.startswith('.latest'):
+        nr = news_list[0]
+        print("Printing most recent news release for {} ({})".format(message.author.nick, message.author))
+        await client.send_message(message.channel, "{} - {}({})".format(nr.date, nr.headline, nr.link))
+
 
 client.loop.create_task(get_news())
 client.run(token)
