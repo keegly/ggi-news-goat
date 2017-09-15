@@ -1,8 +1,6 @@
 import discord
-from discord.ext import commands
 from bs4 import BeautifulSoup
 import asyncio
-import datetime
 import urllib3
 
 description = """a GGI news feed bot"""
@@ -39,6 +37,7 @@ async def get_news():
         #url = 'http://www.stockwatch.com/Quote/Detail.aspx?symbol=GGI&region=C'
         url = 'http://www.sedar.com/new_docs/new_press_releases_en.htm'
         r = h.request('GET', url)
+        print("HTTP Request returned status {}".format(r.status))
         soup = BeautifulSoup(r.data, 'lxml')
         table = soup.find_all("table")[1]
         rows = table("tr")[1:] # skip header
@@ -98,6 +97,7 @@ async def on_message(message):
 
     elif message.content.startswith('.latest'):
         output = ""
+        print("Command .latest received from {} ({})".format(message.author, message.author.nick))
         if len(news_list) is 0:
             output = "No recent news for GGI"
         else:
