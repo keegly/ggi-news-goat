@@ -31,8 +31,8 @@ class news_item():
 
 async def get_news():
     await client.wait_until_ready()
-    channel = discord.Object(id='355892436888715279') # test server
-    #channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    #channel = discord.Object(id='355892436888715279') # test server
+    channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         # scrape stockwatch for news, check if "new" and if so, post
         h = urllib3.PoolManager()
@@ -93,15 +93,22 @@ async def on_message(message):
     if message.content.startswith('.news'):
         print("Printing 5 most recent news releases for {} ({})".format(message.author.nick, message.author))
         output = ""
+        if len(news_list) is 0:
+            output = "No recent news for GGI."
         for nr in news_list[:5]:
             # post the most recent 5 items
             output += '{} - {} ({})\n'.format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.latest'):
-        nr = news_list[0]
-        print("Printing most recent news release for {} ({})".format(message.author.nick, message.author))
-        await client.send_message(message.channel, "{} - {}({})".format(nr.date, nr.headline, nr.link))
+        output = ""
+        if len(news_list) is 0:
+            output = "No recent news for GGI"
+        else:
+            nr = news_list[0]
+            output = "{} - {}({})".format(nr.date, nr.headline, nr.link)
+            print("Printing most recent news release for {} ({})".format(message.author.nick, message.author))
+        await client.send_message(message.channel, output)
 
 
 client.loop.create_task(get_news())
