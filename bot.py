@@ -41,21 +41,17 @@ async def get_news():
         r = h.request('GET', url)
         soup = BeautifulSoup(r.data, 'lxml')
         table = soup.find_all("table")[1]
-      #  print(table)
         rows = table("tr")[1:] # skip header
         counter = 0
         for tr in rows:                        
                 cols = tr("td")  # Equiv to .findAll("td")
-               # print (cols)
                 #Garibaldi Resources Corp.
-                #Achieve Life Sciences, Inc. 
-                #Cronos Group Inc. 
                 if cols[0].text is None:
                         continue
-                elif "Garibaldi Resources" in cols[0].text.strip():
+                elif "Garibaldi Resources Corp" in cols[0].text.strip():
                         name = cols[0].text.strip()
                         while True:
-                                # check for invalid row ie we gotr all the news
+                                # check for invalid row ie we got all the news
                                 temp = rows[counter + 1]("td")
                                 if len(temp) is 1:
                                         break #finished
@@ -70,8 +66,8 @@ async def get_news():
                                 if news not in news_list:
                                     news_list.append(news)
                                     print("Found new {} SEDAR release!!".format(name))
-                                    output = 'New Sedar Filing for {}: {} {} - {}({})'.format(name, date, time, headline, link)
-                                    await client.send_message(channel, '{} - {} ({})'.format(date, headline, link))
+                                    output = '{} {} - New Sedar Filing for {}: {} ({})'.format(date, time, name, headline, link)
+                                    await client.send_message(channel, output)
                                 else:
                                     print("skipping old news item")
 
@@ -79,7 +75,7 @@ async def get_news():
                         break                     
                 counter += 1
         print("No GGI updates found, sleeping.")
-        await asyncio.sleep(60)
+        await asyncio.sleep(30)
 
 @client.event
 async def on_ready():
@@ -91,7 +87,7 @@ async def on_ready():
 @client.event
 async def on_message(message):
     if message.content.startswith('.news'):
-        print("Printing 5 most recent news releases for {} ({})".format(message.author.nick, message.author))
+        print("Command .news received from {} ({})".format(message.author, message.author.nick))
         output = ""
         if len(news_list) is 0:
             output = "No recent news for GGI."
