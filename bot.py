@@ -1,6 +1,7 @@
 import discord
 from bs4 import BeautifulSoup
 import asyncio
+import aiohttp
 import urllib3
 
 description = """a GGI news feed bot"""
@@ -33,54 +34,51 @@ async def get_news():
     channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         # scrape stockwatch for news, check if "new" and if so, post
-        h = urllib3.PoolManager()
         #url = 'http://www.stockwatch.com/Quote/Detail.aspx?symbol=GGI&region=C'
         url = 'http://www.sedar.com/new_docs/new_press_releases_en.htm'
-        r = h.request('GET', url)
-        print("HTTP Request returned status {}".format(r.status))
-        if r.status is not 200:
-            print("HTTP Request failed, sleeping.")
-            # wait longer if it doesnt work?
-            await asyncio.sleep(45)
-            continue
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                print("HTTP Request returned status {}".format(r.status))
+                if r.status != 200:
+                    print("HTTP Request failed, sleeping.")
+                elif r.status == 200:
+                    soup = BeautifulSoup(await r.text(), 'lxml')
+                    table = soup.find_all("table")[1]
+                    rows = table("tr")[1:] # skip header
+                    counter = 0
+                    for tr in rows:                        
+                            cols = tr("td")  # Equiv to .findAll("td")
+                            #Garibaldi Resources Corp.
+                            if cols[0].text is None:
+                                    continue
+                            elif "Garibaldi Resources" in cols[0].text.strip():
+                                    name = cols[0].text.strip()
+                                    while True:
+                                            # check for invalid row ie we got all the news
+                                            temp = rows[counter + 1]("td")
+                                            if len(temp) is 1:
+                                                    break #finished
+                                            
+                                            date = temp[1].text.strip()
+                                            time = temp[2].text.strip()
+                                            headline = temp[3].text.strip() #News Release - English
+                                            #www.sedar.com/GetFile.do?lang=EN + link
+                                            link = 'http://www.sedar.com/GetFile.do?lang=EN' + temp[3].a.get('title')
+                                            
+                                            news = news_item(headline, link, date, time)
+                                            if news not in news_list:
+                                                news_list.append(news)
+                                                print("Found new {} SEDAR release!!".format(name))
+                                                output = '{} {} > {} > {} ({})'.format(date, time, name, headline, link)
+                                                await client.send_message(channel, output)
+                                            else:
+                                                print("skipping old news item")
 
-        soup = BeautifulSoup(r.data, 'lxml')
-        table = soup.find_all("table")[1]
-        rows = table("tr")[1:] # skip header
-        counter = 0
-        for tr in rows:                        
-                cols = tr("td")  # Equiv to .findAll("td")
-                #Garibaldi Resources Corp.
-                if cols[0].text is None:
-                        continue
-                elif "Garibaldi Resources Corp" in cols[0].text.strip():
-                        name = cols[0].text.strip()
-                        while True:
-                                # check for invalid row ie we got all the news
-                                temp = rows[counter + 1]("td")
-                                if len(temp) is 1:
-                                        break #finished
-                                
-                                date = temp[1].text.strip()
-                                time = temp[2].text.strip()
-                                headline = temp[3].text.strip() #News Release - English
-                                #www.sedar.com/GetFile.do?lang=EN + link
-                                link = 'http://www.sedar.com/GetFile.do?lang=EN' + temp[3].a.get('title')
-                                
-                                news = news_item(headline, link, date, time)
-                                if news not in news_list:
-                                    news_list.append(news)
-                                    print("Found new {} SEDAR release!!".format(name))
-                                    output = '{} {} - New Sedar Filing for {}: {} ({})'.format(date, time, name, headline, link)
-                                    await client.send_message(channel, output)
-                                else:
-                                    print("skipping old news item")
-
-                                counter += 1
-                        break                     
-                counter += 1
-        print("No GGI updates found, sleeping.")
-        await asyncio.sleep(20)
+                                            counter += 1
+                                    break                     
+                            counter += 1
+                    print("No GGI updates found, sleeping.")
+        await asyncio.sleep(30)
 
 @client.event
 async def on_ready():
