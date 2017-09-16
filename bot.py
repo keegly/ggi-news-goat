@@ -118,11 +118,14 @@ async def on_message(message):
         print("Command .clap received from {} ({})".format(message.author, message.author.nick))
         output = message.content
         output = output.replace(".clap", "")
-        output = output.replace(" ", "👏")
-        if output == "":
-            return
-        output += "👏"
-        await client.send_message(message.channel, output)
+        words = output.split()
+        output = "👏"
+        tmp = await client.send_message(message.channel, output)
+        for word in words:
+            output += word
+            output += "👏"
+            await client.edit_message(tmp, output)
+            asyncio.sleep(0.5)
 
 client.loop.create_task(get_news())
 client.run(token)
