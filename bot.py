@@ -38,6 +38,12 @@ async def get_news():
         url = 'http://www.sedar.com/new_docs/new_press_releases_en.htm'
         r = h.request('GET', url)
         print("HTTP Request returned status {}".format(r.status))
+        if r.status is not 200:
+            print("HTTP Request failed, sleeping for 60 seconds this time.")
+            # wait longer if it doesnt work?
+            await asyncio.sleep(60)
+            continue
+
         soup = BeautifulSoup(r.data, 'lxml')
         table = soup.find_all("table")[1]
         rows = table("tr")[1:] # skip header
