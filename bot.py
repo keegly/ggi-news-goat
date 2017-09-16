@@ -119,10 +119,10 @@ async def on_message(message):
         output = message.content
         output = output.replace(".clap", "")
         output = output.replace(" ", "👏")
+        if output == "":
+            return
+        output += "👏"
         await client.send_message(message.channel, output)
-
-
-
 
 client.loop.create_task(get_news())
 client.run(token)
