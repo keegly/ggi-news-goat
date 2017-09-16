@@ -39,9 +39,9 @@ async def get_news():
         r = h.request('GET', url)
         print("HTTP Request returned status {}".format(r.status))
         if r.status is not 200:
-            print("HTTP Request failed, sleeping for 60 seconds this time.")
+            print("HTTP Request failed, sleeping.")
             # wait longer if it doesnt work?
-            await asyncio.sleep(60)
+            await asyncio.sleep(45)
             continue
 
         soup = BeautifulSoup(r.data, 'lxml')
@@ -80,7 +80,7 @@ async def get_news():
                         break                     
                 counter += 1
         print("No GGI updates found, sleeping.")
-        await asyncio.sleep(30)
+        await asyncio.sleep(20)
 
 @client.event
 async def on_ready():
