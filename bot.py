@@ -110,6 +110,18 @@ async def on_message(message):
             print("Printing most recent news release for {} ({})".format(message.author.nick, message.author))
         await client.send_message(message.channel, output)
 
+    elif message.content.startswith('.clap'):
+        if (message.author.id == '357169509338972161'): #ignore own comments
+            return
+
+        print("Command .clap received from {} ({})".format(message.author, message.author.nick))
+        output = message.content
+        output = output.replace(".clap", "")
+        output = output.replace(" ", "👏")
+        await client.send_message(message.channel, output)
+
+
+
 
 client.loop.create_task(get_news())
 client.run(token)
