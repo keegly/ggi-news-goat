@@ -1,17 +1,20 @@
+import asyncio
 import discord
 from bs4 import BeautifulSoup
-import asyncio
 import aiohttp
-import urllib3
+#import logging
 
 description = """a GGI news feed bot"""
 # https://www.stockwatch.com/Quote/Detail.aspx?symbol=GGI&region=C
 
 client = discord.Client()
+# spammy?
+#logging.basicConfig(level=logging.INFO)
 #bot = commands.Bot(command_prefix='!', description=description)
 token = "MzU3MTY5NTA5MzM4OTcyMTYx.DJl_ig.IBYtxryOuYyVHfl2ahXgfj6Nwt0"
 
 news_list = []
+halt_list = []
 
 class news_item():
     def __init__(self, headline, link, date, time):
@@ -28,6 +31,19 @@ class news_item():
     time = ""
     link = ""
 
+class halt_item():
+    def __init__(self, text, link, date):
+        self.date = date
+        self.text = text
+        self.link = link
+
+    def __eq__(self, other):
+        return self.date == other.date and self.text == other.text
+
+    date = ""
+    text = ""
+    link = ""
+
 async def get_news():
     await client.wait_until_ready()
     #channel = discord.Object(id='355892436888715279') # test server
@@ -35,6 +51,7 @@ async def get_news():
     while not client.is_closed:
         # scrape stockwatch for news, check if "new" and if so, post
         #url = 'http://www.stockwatch.com/Quote/Detail.aspx?symbol=GGI&region=C'
+        # SEDI faster?
         url = 'http://www.sedar.com/new_docs/new_press_releases_en.htm'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as r:
@@ -44,7 +61,7 @@ async def get_news():
                 elif r.status == 200:
                     soup = BeautifulSoup(await r.text(), 'lxml')
                     table = soup.find_all("table")[1]
-                    rows = table("tr")[1:] # skip header
+                    rows = table("tr")[1:] # skip table header
                     counter = 0
                     for tr in rows:                        
                             cols = tr("td")  # Equiv to .findAll("td")
@@ -57,7 +74,7 @@ async def get_news():
                                             # check for invalid row ie we got all the news
                                             temp = rows[counter + 1]("td")
                                             if len(temp) is 1:
-                                                    break #finished
+                                                    break # finished
                                             
                                             date = temp[1].text.strip()
                                             time = temp[2].text.strip()
@@ -79,6 +96,39 @@ async def get_news():
                             counter += 1
                     print("No GGI updates found, sleeping.")
         await asyncio.sleep(30)
+
+async def get_halted():
+    await client.wait_until_ready()
+    #channel = discord.Object(id='355892436888715279') # test server
+    channel = discord.Object(id='354637284147986433')  # ggi-price-action
+
+    while not client.is_closed:
+        url = 'http://iiroc.mediaroom.com'
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as r:
+                print("HTTP Request returned status {}".format(r.status))
+                if r.status != 200:
+                    print("HTTP Request failed.")
+                elif r.status == 200:
+                    soup = BeautifulSoup(await r.text(), 'lxml')
+                    res = soup.find_all('div', {"class" : "item"})
+                    for item in res:
+                        date = item.contents[1].string.strip()
+                        text = item.contents[2].string.strip()
+                        link = item.contents[2].a.get("href")
+
+                        if 'GGI' in text:
+                            halt = halt_item(text, link, date)
+                            if halt not in halt_list:                                
+                                halt_list.append(halt)
+                                print("Found new GGI Halt notice")
+                                output = '{} > {} ({})'.format(date, text, link)
+                                await client.send_message(channel, output)
+                            else:
+                                print("Skipping old halt item")
+                            
+        print("Halt search complete, sleeping")
+        await asyncio.sleep(32)
 
 @client.event
 async def on_ready():
@@ -112,7 +162,7 @@ async def on_message(message):
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.clap'):
-        if (message.author.id == '357169509338972161'): #ignore own comments
+        if message.author.id == '357169509338972161': #ignore own comments
             return
 
         print("Command .clap received from {} ({})".format(message.author, message.author.nick))
@@ -128,4 +178,5 @@ async def on_message(message):
             asyncio.sleep(0.5)
 
 client.loop.create_task(get_news())
+client.loop.create_task(get_halted())
 client.run(token)

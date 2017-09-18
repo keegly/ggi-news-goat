@@ -1,6 +1,6 @@
+asyncio
 discord.py
 beautifulsoup4
-urllib3
 lxml
 aiohttp
 websockets
