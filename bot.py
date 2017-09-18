@@ -161,6 +161,18 @@ async def on_message(message):
             print("Printing most recent news release for {} ({})".format(message.author.nick, message.author))
         await client.send_message(message.channel, output)
 
+    elif message.content.startswith('.halt'):
+        output = ""
+        print("Command .halt received from {} ({})".format(message.author, message.author.nick))
+        if len(halt_list) is 0:
+            output = "No recent IIROC Trading Halts for GGI"
+        else:
+            halt = halt_list[-1]
+            # post the most recent item
+            output = '{} > {} ({})'.format(halt.date, halt.text, halt.link)
+        await client.send_message(message.channel, output)
+
+
     elif message.content.startswith('.clap'):
         if message.author.id == '357169509338972161': #ignore own comments
             return
