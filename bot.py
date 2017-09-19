@@ -39,7 +39,7 @@ class halt_item():
         self.link = link
 
     def __eq__(self, other):
-        return self.date == other.date and self.text == other.text
+        return self.text == other.text
 
     date = ""
     text = ""
@@ -72,7 +72,7 @@ async def get_news():
                         link = item.contents[3].a.get("href")
                         date = item.contents[1].text.strip()
                         time = ""
-                        if "Garibaldi" in headline or "GGI" in headline:
+                        if "Garibaldi" in headline:
                             # found new NR
                             news = news_item(headline, link, date, time)
                             if news not in news_list:
@@ -81,7 +81,16 @@ async def get_news():
                                 output = '{} > {} ({})'.format(date, headline, link)
                                 await client.send_message(channel, output)
                             else:
-                                print("skipping old news item")                       
+                                print("Skipping old news item")    
+                        elif "GGI" in headline: # halt/resumption notice
+                            halt = halt_item(headline, link, date)
+                            if halt not in halt_list:
+                                halt_list.append(halt)
+                                print("Found new GGI halt/resumption notice!!")
+                                output = '{} > {} ({})'.format(date, headline, link)
+                                await client.send_message(channel, output)
+                            else:
+                                print("Skipping old halt/resumption item")
                    
                     print("Finished searching for GGI updates, sleeping for {} seconds.".format(sleep_time))
         await asyncio.sleep(sleep_time)
@@ -113,11 +122,11 @@ async def get_halted():
                             halt = halt_item(text, link, date)
                             if halt not in halt_list:                                
                                 halt_list.append(halt)
-                                print("Found new GGI Halt notice")
+                                print("Found new GGI Halt/Resumption notice")
                                 output = '{} > {} ({})'.format(date, text, link)
                                 await client.send_message(channel, output)
                             else:
-                                print("Skipping old halt item")
+                                print("Skipping old halt/resumption item")
         
                     print("Halt search complete, sleeping for {} seconds".format(sleep_time))
         await asyncio.sleep(sleep_time)
