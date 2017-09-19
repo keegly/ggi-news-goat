@@ -3,6 +3,7 @@ import discord
 from bs4 import BeautifulSoup
 import aiohttp
 import random
+from timeit import default_timer as timer
 #import logging
 
 description = """a GGI news feed bot"""
@@ -61,6 +62,7 @@ async def get_news():
                     print("HTTP Request for {} failed with status {}, sleeping for {}.".format(url, r.status, sleep_time))
                 elif r.status == 200:
                     print("HTTP Request for {} successful with status {}".format(url, r.status))
+                    start = timer()
                     soup = BeautifulSoup(await r.text(), 'lxml')
                     #res = soup.find_all('a', {"class" : "news-release"})
                     # only grab the NR's
@@ -91,8 +93,8 @@ async def get_news():
                                 await client.send_message(channel, output)
                             else:
                                 print("Skipping old halt/resumption item")
-                   
-                    print("Finished searching for GGI updates, sleeping for {} seconds.".format(sleep_time))
+                    end = timer()                   
+                    print("GGI update search complete in {:.2f}s, sleeping for {}s.".format((end - start), sleep_time))
         await asyncio.sleep(sleep_time)
 
 async def get_halted():
@@ -110,6 +112,7 @@ async def get_halted():
                     sleep_time *= 2
                     print("HTTP Request for {} failed with status {}, sleeping for {}.".format(url, r.status, sleep_time))
                 elif r.status == 200:
+                    start = timer()
                     print("HTTP Request for {} successful with status {}".format(url, r.status))
                     soup = BeautifulSoup(await r.text(), 'lxml')
                     res = soup.find_all('div', {"class" : "item"})
@@ -127,8 +130,8 @@ async def get_halted():
                                 await client.send_message(channel, output)
                             else:
                                 print("Skipping old halt/resumption item")
-        
-                    print("Halt search complete, sleeping for {} seconds".format(sleep_time))
+                    end = timer()
+                    print("Halt search complete in {:.2f}s, sleeping for {}s".format((end - start), sleep_time))
         await asyncio.sleep(sleep_time)
 
 @client.event
