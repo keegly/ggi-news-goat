@@ -1,22 +1,18 @@
 import asyncio
+import random
+from timeit import default_timer as timer
 import discord
 from bs4 import BeautifulSoup
 import aiohttp
-import random
-from timeit import default_timer as timer
-#import logging
 
 description = """a GGI news feed bot"""
-# https://www.stockwatch.com/Quote/Detail.aspx?symbol=GGI&region=C
 
 client = discord.Client()
-# spammy?
-#logging.basicConfig(level=logging.INFO)
-#bot = commands.Bot(command_prefix='!', description=description)
 token = "MzU3MTY5NTA5MzM4OTcyMTYx.DJl_ig.IBYtxryOuYyVHfl2ahXgfj6Nwt0"
 
 news_list = []
 halt_list = []
+
 
 class news_item():
     def __init__(self, headline, link, date, time):
@@ -33,6 +29,7 @@ class news_item():
     time = ""
     link = ""
 
+
 class halt_item():
     def __init__(self, text, link, date):
         self.date = date
@@ -46,6 +43,7 @@ class halt_item():
     text = ""
     link = ""
 
+
 async def get_news():
     await client.wait_until_ready()
     #channel = discord.Object(id='355892436888715279') # test server
@@ -54,48 +52,63 @@ async def get_news():
         # http://www.newswire.ca/news-releases/all-public-company-news/?month=8&day=01&year=2017&hour=14
         url = 'http://www.newswire.ca/news-releases/all-public-company-news/'
         sleep_time = random.randint(25, 35)
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as r:
+                    if r.status != 200:
+                        sleep_time *= 2
+                        print("HTTP Request for {} failed with status {}, sleeping for {}.".format(
+                            url, r.status, sleep_time))
+                    elif r.status == 200:
+                        print("HTTP Request for {} successful with status {}".format(
+                            url, r.status))
+                        start = timer()
+                        soup = BeautifulSoup(await r.text(), 'lxml')
+                        # res = soup.find_all('a', {"class" : "news-release"})
+                        # only grab the NR's
+                        res = soup.find_all('div', {"class": "row"})[5:25]
+                        for item in res:
+                            headline = item.contents[3].text.strip()
+                            headline = headline.split("\n")[0]
+                            link = item.contents[3].a.get("href")
+                            date = item.contents[1].text.strip()
+                            time = ""
+                            if "Garibaldi" in headline:  # found new NR
+                                news = news_item(headline, link, date, time)
+                                if news not in news_list:
+                                    news_list.append(news)
+                                    print("Found new GGI release!!")
+                                    output = '{} > {} ({})'.format(
+                                        date, headline, link)
+                                    await client.send_message(channel, output)
+                                else:
+                                    print("Skipping old news item")
+                            elif "GGI" in headline:  # halt/resumption notice
+                                halt = halt_item(headline, link, date)
+                                if halt not in halt_list:
+                                    halt_list.append(halt)
+                                    print("Found new GGI halt/resumption notice!!")
+                                    output = '{} > {} ({})'.format(
+                                        date, headline, link)
+                                    await client.send_message(channel, output)
+                                else:
+                                    print("Skipping old halt/resumption item")
+                        end = timer()
+                        print("GGI update search complete in {:.2f}s, sleeping for {}s.".format(
+                            (end - start), sleep_time))
+        except (aiohttp.ClientResponseError,
+                aiohttp.ClientOSError,
+                asyncio.TimeoutError) as exc:
+            try:
+                code = exc.code
+            except AttributeError:
+                code = ''
+            print("aiohttp exception: {}".format(code))
+        except Exception:
+            print("Unknown error occureed")
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:
-                if r.status != 200:
-                    sleep_time *= 2
-                    print("HTTP Request for {} failed with status {}, sleeping for {}.".format(url, r.status, sleep_time))
-                elif r.status == 200:
-                    print("HTTP Request for {} successful with status {}".format(url, r.status))
-                    start = timer()
-                    soup = BeautifulSoup(await r.text(), 'lxml')
-                    #res = soup.find_all('a', {"class" : "news-release"})
-                    # only grab the NR's
-                    res = soup.find_all('div', {"class" : "row"})[5:25]
-                    
-                    for item in res:
-                        headline = item.contents[3].text.strip()
-                        headline = headline.split("\n")[0]
-                        link = item.contents[3].a.get("href")
-                        date = item.contents[1].text.strip()
-                        time = ""
-                        if "Garibaldi" in headline:
-                            # found new NR
-                            news = news_item(headline, link, date, time)
-                            if news not in news_list:
-                                news_list.append(news)
-                                print("Found new GGI release!!")
-                                output = '{} > {} ({})'.format(date, headline, link)
-                                await client.send_message(channel, output)
-                            else:
-                                print("Skipping old news item")    
-                        elif "GGI" in headline: # halt/resumption notice
-                            halt = halt_item(headline, link, date)
-                            if halt not in halt_list:
-                                halt_list.append(halt)
-                                print("Found new GGI halt/resumption notice!!")
-                                output = '{} > {} ({})'.format(date, headline, link)
-                                await client.send_message(channel, output)
-                            else:
-                                print("Skipping old halt/resumption item")
-                    end = timer()                   
-                    print("GGI update search complete in {:.2f}s, sleeping for {}s.".format((end - start), sleep_time))
         await asyncio.sleep(sleep_time)
+
 
 async def get_halted():
     await client.wait_until_ready()
@@ -106,33 +119,50 @@ async def get_halted():
         url = 'http://iiroc.mediaroom.com'
         sleep_time = random.randint(25, 35)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as r:                
-                if r.status != 200:
-                    sleep_time *= 2
-                    print("HTTP Request for {} failed with status {}, sleeping for {}.".format(url, r.status, sleep_time))
-                elif r.status == 200:
-                    start = timer()
-                    print("HTTP Request for {} successful with status {}".format(url, r.status))
-                    soup = BeautifulSoup(await r.text(), 'lxml')
-                    res = soup.find_all('div', {"class" : "item"})
-                    for item in res:
-                        date = item.contents[1].string.strip()
-                        text = item.contents[2].string.strip()
-                        link = item.contents[2].a.get("href")
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as r:
+                    if r.status != 200:
+                        sleep_time *= 2
+                        print("HTTP Request for {} failed with status {}, sleeping for {}.".format(
+                            url, r.status, sleep_time))
+                    elif r.status == 200:
+                        start = timer()
+                        print("HTTP Request for {} successful with status {}".format(
+                            url, r.status))
+                        soup = BeautifulSoup(await r.text(), 'lxml')
+                        res = soup.find_all('div', {"class": "item"})
+                        for item in res:
+                            date = item.contents[1].string.strip()
+                            text = item.contents[2].string.strip()
+                            link = item.contents[2].a.get("href")
 
-                        if 'GGI' in text:
-                            halt = halt_item(text, link, date)
-                            if halt not in halt_list:                                
-                                halt_list.append(halt)
-                                print("Found new GGI Halt/Resumption notice")
-                                output = '{} > {} ({})'.format(date, text, link)
-                                await client.send_message(channel, output)
-                            else:
-                                print("Skipping old halt/resumption item")
-                    end = timer()
-                    print("Halt search complete in {:.2f}s, sleeping for {}s".format((end - start), sleep_time))
+                            if 'GGI' in text:
+                                halt = halt_item(text, link, date)
+                                if halt not in halt_list:
+                                    halt_list.append(halt)
+                                    print("Found new GGI Halt/Resumption notice")
+                                    output = '{} > {} ({})'.format(
+                                        date, text, link)
+                                    await client.send_message(channel, output)
+                                else:
+                                    print("Skipping old halt/resumption item")
+                        end = timer()
+                        print("Halt search complete in {:.2f}s, sleeping for {}s".format(
+                            (end - start), sleep_time))
+        except (aiohttp.ClientResponseError,
+                aiohttp.ClientOSError,
+                asyncio.TimeoutError) as exc:
+            try:
+                code = exc.code
+            except AttributeError:
+                code = ''
+            print("aiohttp exception: {}".format(code))
+        except Exception:
+            print("Unknown error occurred")
+
         await asyncio.sleep(sleep_time)
+
 
 @client.event
 async def on_ready():
@@ -142,10 +172,12 @@ async def on_ready():
     print('-------')
     await client.change_presence(game=discord.Game(name='Shit Just Goat Real'))
 
+
 @client.event
 async def on_message(message):
     if message.content.startswith('.news'):
-        print("Command .news received from {} ({})".format(message.author, message.author.nick))
+        print("Command .news received from {} ({})".format(
+            message.author, message.author.nick))
         output = ""
         if len(news_list) is 0:
             output = "No recent news for GGI."
@@ -156,18 +188,21 @@ async def on_message(message):
 
     elif message.content.startswith('.latest'):
         output = ""
-        print("Command .latest received from {} ({})".format(message.author, message.author.nick))
+        print("Command .latest received from {} ({})".format(
+            message.author, message.author.nick))
         if len(news_list) is 0:
             output = "No recent news for GGI"
         else:
             nr = news_list[0]
             output = "{} - {}({})".format(nr.date, nr.headline, nr.link)
-            print("Printing most recent news release for {} ({})".format(message.author.nick, message.author))
+            print("Printing most recent news release for {} ({})".format(
+                message.author.nick, message.author))
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.halt'):
         output = ""
-        print("Command .halt received from {} ({})".format(message.author, message.author.nick))
+        print("Command .halt received from {} ({})".format(
+            message.author, message.author.nick))
         if len(halt_list) is 0:
             output = "No recent IIROC Trading Halts for GGI"
         else:
@@ -177,10 +212,11 @@ async def on_message(message):
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.clap'):
-        if message.author.id == '357169509338972161': #ignore own comments
+        if message.author.id == '357169509338972161':  # ignore own comments
             return
 
-        print("Command .clap received from {} ({})".format(message.author, message.author.nick))
+        print("Command .clap received from {} ({})".format(
+            message.author, message.author.nick))
         output = message.content
         output = output.replace(".clap", "")
         words = output.split()
