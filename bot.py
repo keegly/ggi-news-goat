@@ -181,10 +181,10 @@ async def on_message(message):
         output = ""
         if len(news_list) is 0:
             output = "Wait a sec, what's this? Found some new GGI News!"
-            await client.send_message(message.channel, output)
+            tmp = await client.send_message(message.channel, output)
             await asyncio.sleep(5)
             output = "Got your goat! Just kidding, still no news."
-            await client.send_message(message.channel, output)
+            await client.edit_message(tmp, output)
             return
             # output = "No recent news for GGI."
         for nr in news_list[:5]:
@@ -210,7 +210,13 @@ async def on_message(message):
         print("Command .halt received from {} ({})".format(
             message.author, message.author.nick))
         if len(halt_list) is 0:
-            output = "No recent IIROC Trading Halts for GGI"
+            output = "Well since you asked so nicely... "
+            tmp = await client.send_message(message.channel, output)
+            await asyncio.sleep(5)
+            output = "Nope, GGI is still not halted."
+            await client.edit_message(tmp, output)
+            return
+            # output = "No recent IIROC Trading Halts for GGI"
         else:
             halt = halt_list[-1]
             # post the most recent item
