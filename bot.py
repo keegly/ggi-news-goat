@@ -1,5 +1,5 @@
 import asyncio
-import random
+from random import randint
 from timeit import default_timer as timer
 import discord
 from bs4 import BeautifulSoup
@@ -51,7 +51,7 @@ async def get_news():
     while not client.is_closed:
         # http://www.newswire.ca/news-releases/all-public-company-news/?month=8&day=01&year=2017&hour=14
         url = 'http://www.newswire.ca/news-releases/all-public-company-news/'
-        sleep_time = random.randint(25, 35)
+        sleep_time = randint(25, 35)
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.get(url) as r:
@@ -117,7 +117,7 @@ async def get_halted():
 
     while not client.is_closed:
         url = 'http://iiroc.mediaroom.com'
-        sleep_time = random.randint(25, 35)
+        sleep_time = randint(25, 35)
 
         try:
             async with aiohttp.ClientSession() as session:
@@ -180,13 +180,16 @@ async def on_message(message):
             message.author, message.author.nick))
         output = ""
         if len(news_list) is 0:
-            output = "Wait a sec, what's this? Found some new GGI News!"
-            tmp = await client.send_message(message.channel, output)
-            await asyncio.sleep(5)
-            output = "Got your goat! Just kidding, still no news."
-            await client.edit_message(tmp, output)
-            return
-            # output = "No recent news for GGI."
+            num = randint(0, 10)
+            if num < 4:
+                output = "Wait a sec, what's this? Found some new GGI News!"
+                tmp = await client.send_message(message.channel, output)
+                await asyncio.sleep(4)
+                output = "Got your goat! Just kidding, still no news."
+                await client.edit_message(tmp, output)
+                return
+            else:
+                output = "No recent news for GGI."
         for nr in news_list[:5]:
             # post the most recent 5 items
             output += '{} - {} ({})\n'.format(nr.date, nr.headline, nr.link)
@@ -210,13 +213,16 @@ async def on_message(message):
         print("Command .halt received from {} ({})".format(
             message.author, message.author.nick))
         if len(halt_list) is 0:
-            output = "Well since you asked so nicely... "
-            tmp = await client.send_message(message.channel, output)
-            await asyncio.sleep(5)
-            output = "Nope, GGI is still not halted."
-            await client.edit_message(tmp, output)
-            return
-            # output = "No recent IIROC Trading Halts for GGI"
+            num = randint(0,10)
+            if num < 4:
+                output = "Well since you asked so nicely... "
+                tmp = await client.send_message(message.channel, output)
+                await asyncio.sleep(3)
+                output = "Nope, GGI is still not halted."
+                await client.edit_message(tmp, output)
+                return
+            else:
+                output = "No recent IIROC Trading Halts for GGI"
         else:
             halt = halt_list[-1]
             # post the most recent item
