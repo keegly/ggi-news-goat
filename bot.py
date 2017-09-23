@@ -181,7 +181,7 @@ async def on_message(message):
         output = ""
         if len(news_list) is 0:
             num = randint(0, 10)
-            if num < 4:
+            if num < 6:
                 output = "Wait a sec, what's this? Found some new GGI News!"
                 tmp = await client.send_message(message.channel, output)
                 await asyncio.sleep(4)
@@ -214,7 +214,7 @@ async def on_message(message):
             message.author, message.author.nick))
         if len(halt_list) is 0:
             num = randint(0,10)
-            if num < 4:
+            if num < 6:
                 output = "Well since you asked so nicely... "
                 tmp = await client.send_message(message.channel, output)
                 await asyncio.sleep(3)
