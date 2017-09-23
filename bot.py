@@ -180,7 +180,13 @@ async def on_message(message):
             message.author, message.author.nick))
         output = ""
         if len(news_list) is 0:
-            output = "No recent news for GGI."
+            output = "Wait a sec, what's this? Found some new GGI News!"
+            await client.send_message(message.channel, output)
+            await asyncio.sleep(5)
+            output = "Got your goat! Just kidding, still no news."
+            await client.send_message(message.channel, output)
+            return
+            # output = "No recent news for GGI."
         for nr in news_list[:5]:
             # post the most recent 5 items
             output += '{} - {} ({})\n'.format(nr.date, nr.headline, nr.link)
