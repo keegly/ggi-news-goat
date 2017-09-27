@@ -243,7 +243,7 @@ async def on_message(message):
         if len(news_list) is 0:
             output = "❌ No news for GGI ❌"
         else:
-            nr = news_list[-1]
+            nr = news_list[-1:]
             output = "{} - {}({})".format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
@@ -253,7 +253,7 @@ async def on_message(message):
         if len(halt_list) is 0:
             output = "❌ GGI.V: Not Halted ❌"
         else:
-            halt = halt_list[-1]
+            halt = halt_list[-1:]
             # post the most recent item
             output = '{} > {} ({})'.format(halt.date, halt.text, halt.link)
         await client.send_message(message.channel, output)
@@ -304,15 +304,13 @@ def preload_news_items():
     """ TODO: Do an inital scrape here to populate any existing news without outputting it to chat
               Because this is just poverty """
     news_list.append(NewsItem('Garibaldi Financing Revised',
-                              'http://www.newswire.ca/news-releases/garibaldi-financing-revised-648074313.html',
+                              'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=803825&_Type=News-Releases&_Title=Garibaldi-Financing-Revised',
                               'Sep 26, 2017, 19:33 ET'))
     news_list.append(NewsItem('Garibaldi Intersects Broad Intervals Of Nickel-Copper Sulphide Mineralization In First Drill Hole At E&L',
-                              'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=801676&_Type=News-Releases&_Title=Garibaldi-\
-                              Intersects-Broad-Intervals-Of-Nickel-Copper-Sulphide-Mineralizati...',
+                              'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=801676&_Type=News-Releases&_Title=Garibaldi-Intersects-Broad-Intervals-Of-Nickel-Copper-Sulphide-Mineralizati...',
                               'September 01, 2017'))
     news_list.append(NewsItem('Garibaldi Commences Drilling At Nickel Mountain',
-                            'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=800969&_Type=News-Releases&_Title=Garibaldi\
-                            -Commences-Drilling-At-Nickel-Mountain',
+                            'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=800969&_Type=News-Releases&_Title=Garibaldi-Commences-Drilling-At-Nickel-Mountain',
                             'August 24, 2017'))
 
 preload_news_items()
