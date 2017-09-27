@@ -73,8 +73,8 @@ async def scrape(url):
 async def get_news():
     """ Parse newswire and see if they've any GGI releases for us """
     await client.wait_until_ready()
-    channel = discord.Object(id='355892436888715279') # test server
-    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    # channel = discord.Object(id='355892436888715279') # test server
+    channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         url = 'http://www.newswire.ca/news-releases/all-public-company-news/' # ?c=n?page=1&pagesize=200
         sleep_time = randint(10, 25)
@@ -124,8 +124,8 @@ async def get_news():
 async def get_company_news():
     """ Check directly off of the Garibaldi site as well """
     await client.wait_until_ready()
-    channel = discord.Object(id='355892436888715279') # test server
-    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    # channel = discord.Object(id='355892436888715279') # test server
+    channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         url = 'http://www.garibaldiresources.com/s/NewsReleases.asp'
         sleep_time = randint(20, 30)
@@ -163,8 +163,8 @@ async def get_company_news():
 async def get_halted():
     """ Parse IIROC and see if we got any halt/resumption notices """
     await client.wait_until_ready()
-    channel = discord.Object(id='355892436888715279') # test server
-    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    # channel = discord.Object(id='355892436888715279') # test server
+    channel = discord.Object(id='354637284147986433')  # ggi-price-action
 
     while not client.is_closed:
         url = 'http://iiroc.mediaroom.com'
