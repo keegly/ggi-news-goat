@@ -73,10 +73,9 @@ async def scrape(url):
 async def get_news():
     """ Parse newswire and see if they've any GGI releases for us """
     await client.wait_until_ready()
-    # channel = discord.Object(id='355892436888715279') # test server
-    channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    channel = discord.Object(id='355892436888715279') # test server
+    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
-        # http://www.newswire.ca/news-releases/all-public-company-news/?month=8&day=01&year=2017&hour=14
         url = 'http://www.newswire.ca/news-releases/all-public-company-news/' # ?c=n?page=1&pagesize=200
         sleep_time = randint(10, 25)
         soup = await scrape(url)
@@ -117,17 +116,55 @@ async def get_news():
                     else:
                         logging.info("Skipping old halt/resumption item")
             end = timer()
-            logging.info("GGI update search complete in {:.2f}s, sleeping for {}s."
+            logging.info("Newswire update search complete in {:.2f}s, sleeping for {}s."
                          .format((end - start), sleep_time))
 
         await asyncio.sleep(sleep_time)
 
+async def get_company_news():
+    """ Check directly off of the Garibaldi site as well """
+    await client.wait_until_ready()
+    channel = discord.Object(id='355892436888715279') # test server
+    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    while not client.is_closed:
+        url = 'http://www.garibaldiresources.com/s/NewsReleases.asp'
+        sleep_time = randint(20, 30)
+        soup = await scrape(url)
+        if soup is None: # HTTP req failed, so wait longer before trying again
+            sleep_time *= 2
+            logging.info("Sleeping for %ds", sleep_time)
+        else:
+            start = timer()
+            table = soup.find_all('tr')[:3] # grab only the most recent 3
+            for tr in table:
+                cols = tr("td")  # Equiv to .findAll("td")
+                try:
+                    date = cols[0].text.strip()
+                    headline = cols[1].string.strip()
+                    link = 'http://www.garibaldiresources.com' + cols[0].a.get("href")
+                except (AttributeError, IndexError) as exc:
+                    logging.exception("Error Parsing HTML: %s", exc)
+                    continue
+                news = NewsItem(headline, link, date)
+                if news not in news_list:
+                    news_list.append(news)
+                    logging.info("Found new GGI release!!")
+                    output = '{} > {} ({})'.format(date, headline, link)
+                    await client.send_message(channel, output)
+                else:
+                    logging.info("Skipping old news item")
+
+            end = timer()
+            logging.info("Company site update search complete in {:.2f}s, sleeping for {}s."
+                         .format((end - start), sleep_time))
+
+        await asyncio.sleep(sleep_time)
 
 async def get_halted():
     """ Parse IIROC and see if we got any halt/resumption notices """
     await client.wait_until_ready()
-    # channel = discord.Object(id='355892436888715279') # test server
-    channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    channel = discord.Object(id='355892436888715279') # test server
+    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
 
     while not client.is_closed:
         url = 'http://iiroc.mediaroom.com'
@@ -173,13 +210,6 @@ async def on_ready():
     print('-------')
     # Configure logging
     logging.basicConfig(level=logging.INFO)
-    # TODO: Do an inital scrape here to populate any existing news without outputting it to chat
-    #       Because this is just poverty
-    headline = 'Garibaldi Financing Revised'
-    link = 'http://www.newswire.ca/news-releases/garibaldi-financing-revised-648074313.html'
-    date = 'Sep 26, 2017, 19:33 ET'
-    news = NewsItem(headline, link, date)
-    news_list.append(news)
     await client.change_presence(game=discord.Game(name='Shit Just Goat Real'))
 
 
@@ -188,8 +218,8 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    if message.content.startswith('.news'):
-        logging.info("Command .news received from %s (%s)", message.author, message.author.nick)
+    if message.content.startswith('.recent'):
+        logging.info("Command .recent received from %s (%s)", message.author, message.author.nick)
         output = ""
         if len(news_list) is 0:
             num = randint(0, 10)
@@ -207,13 +237,13 @@ async def on_message(message):
             output += '{} - {} ({})\n'.format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
-    elif message.content.startswith('.latest'):
+    elif message.content.startswith('.news'):
         output = ""
-        logging.info("Command .latest received from %s (%s)", message.author, message.author.nick)
+        logging.info("Command .news received from %s (%s)", message.author, message.author.nick)
         if len(news_list) is 0:
             output = "❌ No news for GGI ❌"
         else:
-            nr = news_list[0]
+            nr = news_list[-1]
             output = "{} - {}({})".format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
@@ -241,7 +271,52 @@ async def on_message(message):
             await client.edit_message(tmp, output)
             asyncio.sleep(0.5)
 
-# TODO: preload news list from DB here?
+    elif message.content.startswith('.goat'):
+        logging.info("Command .goat received from %s (%s)", message.author, message.author.nick)
+        output = message.content
+        output = output.replace(".goat", "")
+        words = output.split()
+        output = "🐐"
+        tmp = await client.send_message(message.channel, output)
+        for word in words:
+            output += word
+            output += "🐐"
+            await client.edit_message(tmp, output)
+            asyncio.sleep(0.5)
+
+# TODO: preload news list from DB here? 🐐
+def db_init():
+    urllib.parse.uses_netloc.append("postgres")
+    url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
+
+    try:
+        conn = psycopg2.connect(
+            database=url.path[1:],
+            user=url.username,
+            password=url.password,
+            host=url.hostname,
+            port=url.port
+        )
+    except:
+        logging.exception("Unable to connect to database")
+
+def preload_news_items():
+    """ TODO: Do an inital scrape here to populate any existing news without outputting it to chat
+              Because this is just poverty """
+    news_list.append(NewsItem('Garibaldi Financing Revised',
+                              'http://www.newswire.ca/news-releases/garibaldi-financing-revised-648074313.html',
+                              'Sep 26, 2017, 19:33 ET'))
+    news_list.append(NewsItem('Garibaldi Intersects Broad Intervals Of Nickel-Copper Sulphide Mineralization In First Drill Hole At E&L',
+                              'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=801676&_Type=News-Releases&_Title=Garibaldi-\
+                              Intersects-Broad-Intervals-Of-Nickel-Copper-Sulphide-Mineralizati...',
+                              'September 01, 2017'))
+    news_list.append(NewsItem('Garibaldi Commences Drilling At Nickel Mountain',
+                            'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=800969&_Type=News-Releases&_Title=Garibaldi\
+                            -Commences-Drilling-At-Nickel-Mountain',
+                            'August 24, 2017'))
+
+preload_news_items()
+client.loop.create_task(get_company_news())
 client.loop.create_task(get_news())
 client.loop.create_task(get_halted())
 client.run(token)
