@@ -1,6 +1,7 @@
 asyncio
 discord.py
 beautifulsoup4
+psycopg2
 lxml
 aiohttp
 websockets
