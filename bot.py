@@ -244,7 +244,7 @@ async def on_message(message):
             output = "❌ No news for GGI ❌"
         else:
             nr = news_list[-1]
-            output = "{} - {}({})".format(nr.date, nr.headline, nr.link)
+            output = "{} - {} ({})".format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.halt'):
