@@ -100,7 +100,7 @@ async def get_news():
                     if news not in news_list:
                         news_list.append(news)
                         logging.info("Found new GGI release!!")
-                        output = '{} > {} ({})'.format(
+                        output = "{} > {} > {}".format(
                             date, headline, link)
                         await client.send_message(channel, output)
                     else:
@@ -110,7 +110,7 @@ async def get_news():
                     if halt not in halt_list:
                         halt_list.append(halt)
                         logging.info("Found new GGI halt/resumption notice!!")
-                        output = '{} > {} ({})'.format(
+                        output = "{} > {} > {}".format(
                             date, headline, link)
                         await client.send_message(channel, output)
                     else:
@@ -149,7 +149,7 @@ async def get_company_news():
                 if news not in news_list:
                     news_list.append(news)
                     logging.info("Found new GGI release!!")
-                    output = '{} > {} ({})'.format(date, headline, link)
+                    output = "{} > {} > {}".format(date, headline, link)
                     await client.send_message(channel, output)
                 else:
                     logging.info("Skipping old news item")
@@ -190,7 +190,7 @@ async def get_halted():
                     if halt not in halt_list:
                         halt_list.append(halt)
                         logging.info("Found new GGI Halt/Resumption notice")
-                        output = '{} > {} ({})'.format(
+                        output = "{} > {} > {}".format(
                             date, text, link)
                         await client.send_message(channel, output)
                     else:
@@ -234,7 +234,7 @@ async def on_message(message):
                 output = "No news for GGI."
         for nr in news_list[-5:]:
             # post the most recent 5 items
-            output += '{} - {} ({})\n'.format(nr.date, nr.headline, nr.link)
+            output += '{} > {} > {}\n'.format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.news'):
@@ -244,7 +244,7 @@ async def on_message(message):
             output = "❌ No news for GGI ❌"
         else:
             nr = news_list[-1]
-            output = "{} - {} ({})".format(nr.date, nr.headline, nr.link)
+            output = "{} > {} > {}".format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.halt'):
@@ -255,7 +255,7 @@ async def on_message(message):
         else:
             halt = halt_list[-1]
             # post the most recent item
-            output = '{} > {} ({})'.format(halt.date, halt.text, halt.link)
+            output = "{} > {} > {}".format(halt.date, halt.text, halt.link)
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.clap'):
