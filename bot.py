@@ -48,7 +48,7 @@ class HaltItem():
 async def scrape(url):
     """ Scrape a given URL and return a beautiful soup object ready for use """
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(headers={'Cache-Control':'no-cache'}) as session:
             async with session.get(url) as r:
                 if r.status != 200:
                     logging.error("HTTP Request for %.22s failed with status %d.", url, r.status)
@@ -100,7 +100,7 @@ async def get_news():
                     if news not in news_list:
                         news_list.append(news)
                         logging.info("Found new GGI release!!")
-                        output = "{} > {} > {}".format(
+                        output = '{} > {} ({})'.format(
                             date, headline, link)
                         await client.send_message(channel, output)
                     else:
@@ -110,7 +110,7 @@ async def get_news():
                     if halt not in halt_list:
                         halt_list.append(halt)
                         logging.info("Found new GGI halt/resumption notice!!")
-                        output = "{} > {} > {}".format(
+                        output = '{} > {} ({})'.format(
                             date, headline, link)
                         await client.send_message(channel, output)
                     else:
@@ -149,7 +149,7 @@ async def get_company_news():
                 if news not in news_list:
                     news_list.append(news)
                     logging.info("Found new GGI release!!")
-                    output = "{} > {} > {}".format(date, headline, link)
+                    output = '{} > {} ({})'.format(date, headline, link)
                     await client.send_message(channel, output)
                 else:
                     logging.info("Skipping old news item")
@@ -190,7 +190,7 @@ async def get_halted():
                     if halt not in halt_list:
                         halt_list.append(halt)
                         logging.info("Found new GGI Halt/Resumption notice")
-                        output = "{} > {} > {}".format(
+                        output = '{} > {} ({})'.format(
                             date, text, link)
                         await client.send_message(channel, output)
                     else:
@@ -215,10 +215,15 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
+    mods = ['236291672655396864', '354632104090271746', '354636345479528448']
+
     if message.author == client.user:
         return
 
     if message.content.startswith('.recent'):
+        if message.author.id not in mods:
+            logging.info("Non permitted member %s attempt to use command", message.author)
+            return
         logging.info("Command .recent received from %s (%s)", message.author, message.author.nick)
         output = ""
         if len(news_list) is 0:
@@ -234,20 +239,26 @@ async def on_message(message):
                 output = "No news for GGI."
         for nr in news_list[-5:]:
             # post the most recent 5 items
-            output += '{} > {} > {}\n'.format(nr.date, nr.headline, nr.link)
+            output += '{} - {} ({})\n'.format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.news'):
+        if message.author.id not in mods:
+            logging.info("Non permitted member %s attempt to use command", message.author)
+            return
         output = ""
         logging.info("Command .news received from %s (%s)", message.author, message.author.nick)
         if len(news_list) is 0:
             output = "❌ No news for GGI ❌"
         else:
             nr = news_list[-1]
-            output = "{} > {} > {}".format(nr.date, nr.headline, nr.link)
+            output = "{} - {}({})".format(nr.date, nr.headline, nr.link)
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.halt'):
+        if message.author.id not in mods:
+            logging.info("Non permitted member %s attempt to use command", message.author)
+            return
         output = ""
         logging.info("Command .halt received from %s (%s)", message.author, message.author.nick)
         if len(halt_list) is 0:
@@ -255,7 +266,7 @@ async def on_message(message):
         else:
             halt = halt_list[-1]
             # post the most recent item
-            output = "{} > {} > {}".format(halt.date, halt.text, halt.link)
+            output = '{} > {} ({})'.format(halt.date, halt.text, halt.link)
         await client.send_message(message.channel, output)
 
     elif message.content.startswith('.clap'):
@@ -303,6 +314,7 @@ def db_init():
 def preload_news_items():
     """ TODO: Do an inital scrape here to populate any existing news without outputting it to chat
               Because this is just poverty """
+    logging.info("Preloading 3 most recent news releases")
     news_list.append(NewsItem('Garibaldi Commences Drilling At Nickel Mountain',
                               'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=800969&_Type=News-Releases&_Title=Garibaldi-Commences-Drilling-At-Nickel-Mountain',
                               'August 24, 2017'))
