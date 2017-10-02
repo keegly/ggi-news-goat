@@ -216,7 +216,7 @@ async def on_message(message):
         return
 
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
-        logging.info("Command received from non authorized user: %s (%s)", message.author, message.author.nick)
+        # logging.info("Command received from non authorized user: %s (%s)", message.author, message.author.nick)
         return
 
     if message.content.startswith('.recent'):
