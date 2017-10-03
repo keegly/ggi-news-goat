@@ -263,8 +263,8 @@ async def on_message(message):
 
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
         # add sassy reaction(s)
-        await client.add_reaction(message, '🙅')
-        await client.add_reaction(message, '🤔')
+        # await client.add_reaction(message, '🙅')
+        # await client.add_reaction(message, '🤔')
         return
 
     if message.content.startswith('.recent'):
