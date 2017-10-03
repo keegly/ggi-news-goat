@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import ssl
 from random import randint
 from timeit import default_timer as timer
 import discord
@@ -69,8 +70,8 @@ async def scrape(url):
 async def get_stockwatch():
     """ Check stockwatch since apparently it's the fucking fastest... """
     await client.wait_until_ready()
-    channel = discord.Object(id='355892436888715279') # test server
-    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    # channel = discord.Object(id='355892436888715279') # test server
+    channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         url = 'https://www.stockwatch.com/Quote/Detail.aspx?symbol=GGI&region=C'
         sleep_time = randint(10, 25)
@@ -232,6 +233,17 @@ async def get_halted():
 
         await asyncio.sleep(sleep_time)
 
+async def get_email():
+    await client.wait_until_ready()
+
+    channel = discord.Object(id='355892436888715279') # test server
+    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    while not client.is_closed:
+        ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        sleep_time = randint(10, 25)   
+
+        await asyncio.sleep(sleep_time)
+
 
 @client.event
 async def on_ready():
@@ -346,10 +358,14 @@ def preload_stockwatch_items():
     news_list.append(NewsItem('Garibaldi closes $2.5M first tranche of placement',
                               'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2512115&symbol=GGI&region=C',
                               '2017-10-02 19:54'))
+    news_list.append(NewsItem('SEDAR Early Warning Report',
+                              'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2512374&symbol=GGI&region=C',
+                              '2017-10-03 10:52'))
 # preload_news_items()
 preload_stockwatch_items()
 client.loop.create_task(get_stockwatch())
 # client.loop.create_task(get_company_news())
 # client.loop.create_task(get_news())
 client.loop.create_task(get_halted())
+# client.loop.create_task(get_email())
 client.run(token)
