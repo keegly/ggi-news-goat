@@ -66,6 +66,40 @@ async def scrape(url):
     except Exception as exc:
         logging.exception("Unknown error occurred: %s", exc)
 
+async def get_stockwatch():
+    """ Check stockwatch since apparently it's the fucking fastest... """
+    await client.wait_until_ready()
+    channel = discord.Object(id='355892436888715279') # test server
+    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
+    while not client.is_closed:
+        url = 'https://www.stockwatch.com/Quote/Detail.aspx?symbol=GGI&region=C'
+        sleep_time = randint(10, 25)
+        soup = await scrape(url)
+        if soup is None: # HTTP req failed, so wait longer before trying again
+            sleep_time *= 2
+            logging.info("Sleeping for %ds", sleep_time)
+        else:
+            start = timer()
+            table = soup.find(id="MainContent_NewsList1_Table1_Table1")
+            rows = table("tr")[1:] # skip header, grab first 3
+            for tr in rows:
+                cols = tr("td")  # Equiv to .findAll("td")
+        
+                headline = cols[5].string.strip()
+                link = 'http://www.stockwatch.com' + cols[5].a.get('href')
+                date = cols[0].string.strip()
+
+                news = NewsItem(headline, link, date)
+                if news not in news_list:
+                    news_list.append(news)
+                    await client.send_message(channel, '{} > {} > {}'.format(date, headline, link))
+                else:
+                    logging.info("Skipping old news item (%s)", headline)
+
+            end = timer()
+            logging.info("Stockwatch search complete in {:.2f}s, sleeping for {}s."
+                         .format((end - start), sleep_time))
+        await asyncio.sleep(sleep_time)
 
 async def get_news():
     """ Parse newswire and see if they've any GGI releases for us """
@@ -216,7 +250,6 @@ async def on_message(message):
         return
 
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
-        # logging.info("Command received from non authorized user: %s (%s)", message.author, message.author.nick)
         return
 
     if message.content.startswith('.recent'):
@@ -286,20 +319,6 @@ async def on_message(message):
             asyncio.sleep(0.5)
 
 # TODO: preload news list from DB here? 🐐
-def db_init():
-    urllib.parse.uses_netloc.append("postgres")
-    url = urllib.parse.urlparse(os.environ["DATABASE_URL"])
-
-    try:
-        conn = psycopg2.connect(
-            database=url.path[1:],
-            user=url.username,
-            password=url.password,
-            host=url.hostname,
-            port=url.port
-        )
-    except:
-        logging.exception("Unable to connect to database")
 
 def preload_news_items():
     """ TODO: Do an inital scrape here to populate any existing news without outputting it to chat
@@ -314,8 +333,23 @@ def preload_news_items():
                               'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=803825&_Type=News-Releases&_Title=Garibaldi-Financing-Revised',
                               'Sep 26, 2017, 19:33 ET'))
 
-preload_news_items()
-client.loop.create_task(get_company_news())
-client.loop.create_task(get_news())
+def preload_stockwatch_items():
+    news_list.append(NewsItem('Garibaldi revises financing terms, grants options',
+                              'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2509781&symbol=GGI&region=C',
+                              '2017-09-26 19:24'))
+    news_list.append(NewsItem('SEDAR MD & A',
+                              'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2511512&symbol=GGI&region=C',
+                              '2017-09-29 19:33'))
+    news_list.append(NewsItem('SEDAR Interim Financial Statements',
+                              'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2511511&symbol=GGI&region=C',
+                              '2017-09-29 19:33'))
+    news_list.append(NewsItem('Garibaldi closes $2.5M first tranche of placement',
+                              'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2512115&symbol=GGI&region=C',
+                              '2017-10-02 19:54'))
+# preload_news_items()
+preload_stockwatch_items()
+client.loop.create_task(get_stockwatch())
+# client.loop.create_task(get_company_news())
+# client.loop.create_task(get_news())
 client.loop.create_task(get_halted())
 client.run(token)
