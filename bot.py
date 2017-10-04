@@ -14,6 +14,8 @@ token = "MzU3MTY5NTA5MzM4OTcyMTYx.DJl_ig.IBYtxryOuYyVHfl2ahXgfj6Nwt0"
 
 news_list = [] # pylint: disable=C0103
 halt_list = [] # pylint: disable=C0103
+output_channels = ['365150978439381004', '354637284147986433'] # ggi-price-action and private serv
+# output_channels = ['355892436888715279'] # testing
 
 class NewsItem():
     def __init__(self, headline, link, date):
@@ -70,8 +72,6 @@ async def scrape(url):
 async def get_stockwatch():
     """ Check stockwatch since apparently it's the fucking fastest... """
     await client.wait_until_ready()
-    # channel = discord.Object(id='355892436888715279') # test server
-    channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         url = 'https://www.stockwatch.com/Quote/Detail.aspx?symbol=GGI&region=C'
         sleep_time = randint(10, 25)
@@ -93,7 +93,8 @@ async def get_stockwatch():
                 news = NewsItem(headline, link, date)
                 if news not in news_list:
                     news_list.append(news)
-                    await client.send_message(channel, '{} > {} > {}'.format(date, headline, link))
+                    for channel in output_channels:
+                        await client.send_message(channel, '{} > {} > {}'.format(date, headline, link))
                 else:
                     logging.info("Skipping old news item (%s)", headline)
 
@@ -105,8 +106,6 @@ async def get_stockwatch():
 async def get_news():
     """ Parse newswire and see if they've any GGI releases for us """
     await client.wait_until_ready()
-    # channel = discord.Object(id='355892436888715279') # test server
-    channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         url = 'http://www.newswire.ca/news-releases/all-public-company-news/' # ?c=n?page=1&pagesize=200
         sleep_time = randint(10, 25)
@@ -134,7 +133,8 @@ async def get_news():
                         logging.info("Found new GGI release!!")
                         output = "{} > {} > {}".format(
                             date, headline, link)
-                        await client.send_message(channel, output)
+                        for channel in output_channels:
+                            await client.send_message(channel, output)
                     else:
                         logging.info("Skipping old news item")
                 elif "GGI" in headline:  # halt/resumption notice
@@ -144,7 +144,8 @@ async def get_news():
                         logging.info("Found new GGI halt/resumption notice!!")
                         output = "{} > {} > {}".format(
                             date, headline, link)
-                        await client.send_message(channel, output)
+                        for channel in output_channels:
+                            await client.send_message(channel, output)
                     else:
                         logging.info("Skipping old halt/resumption item")
             end = timer()
@@ -156,8 +157,6 @@ async def get_news():
 async def get_company_news():
     """ Check directly off of the Garibaldi site as well """
     await client.wait_until_ready()
-    # channel = discord.Object(id='355892436888715279') # test server
-    channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         url = 'http://www.garibaldiresources.com/s/NewsReleases.asp'
         sleep_time = randint(20, 30)
@@ -182,7 +181,8 @@ async def get_company_news():
                     news_list.append(news)
                     logging.info("Found new GGI release!!")
                     output = "{} > {} > {}".format(date, headline, link)
-                    await client.send_message(channel, output)
+                    for channel in output_channels:
+                        await client.send_message(channel, output)
                 else:
                     logging.info("Skipping old news item")
 
@@ -195,8 +195,6 @@ async def get_company_news():
 async def get_halted():
     """ Parse IIROC and see if we got any halt/resumption notices """
     await client.wait_until_ready()
-    # channel = discord.Object(id='355892436888715279') # test server
-    channel = discord.Object(id='354637284147986433')  # ggi-price-action
 
     while not client.is_closed:
         url = 'http://iiroc.mediaroom.com'
@@ -224,7 +222,8 @@ async def get_halted():
                         logging.info("Found new GGI Halt/Resumption notice")
                         output = "{} > {} > {}".format(
                             date, text, link)
-                        await client.send_message(channel, output)
+                        for channel in output_channels:
+                            await client.send_message(channel, output)
                     else:
                         logging.info("Skipping old halt/resumption item")
             end = timer()
@@ -235,9 +234,6 @@ async def get_halted():
 
 async def get_email():
     await client.wait_until_ready()
-
-    channel = discord.Object(id='355892436888715279') # test server
-    # channel = discord.Object(id='354637284147986433')  # ggi-price-action
     while not client.is_closed:
         ctx = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
         sleep_time = randint(10, 25)   
@@ -262,9 +258,6 @@ async def on_message(message):
         return
 
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
-        # add sassy reaction(s)
-        # await client.add_reaction(message, '🙅')
-        # await client.add_reaction(message, '🤔')
         return
 
     if message.content.startswith('.recent'):
