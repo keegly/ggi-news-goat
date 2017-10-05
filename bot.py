@@ -15,7 +15,7 @@ token = "MzU3MTY5NTA5MzM4OTcyMTYx.DJl_ig.IBYtxryOuYyVHfl2ahXgfj6Nwt0"
 news_list = [] # pylint: disable=C0103
 halt_list = [] # pylint: disable=C0103 
 stockwatch_list = []
-output_channels = ['365150978439381004', '354637284147986433'] # ggi-price-action and private serv
+output_channels = [ discord.Object(id=('365150978439381004'),  discord.Object(id='354637284147986433')] # ggi-price-action and private serv
 # output_channels = ['355892436888715279'] # testing
 
 class NewsItem():
