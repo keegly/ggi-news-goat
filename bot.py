@@ -13,7 +13,8 @@ client = discord.Client()
 token = "MzU3MTY5NTA5MzM4OTcyMTYx.DJl_ig.IBYtxryOuYyVHfl2ahXgfj6Nwt0"
 
 news_list = [] # pylint: disable=C0103
-halt_list = [] # pylint: disable=C0103
+halt_list = [] # pylint: disable=C0103 
+stockwatch_list = []
 output_channels = ['365150978439381004', '354637284147986433'] # ggi-price-action and private serv
 # output_channels = ['355892436888715279'] # testing
 
@@ -91,8 +92,8 @@ async def get_stockwatch():
                 date = cols[0].string.strip()
 
                 news = NewsItem(headline, link, date)
-                if news not in news_list:
-                    news_list.append(news)
+                if news not in stockwatch_list:
+                    stockwatch_list.append(news)
                     for channel in output_channels:
                         await client.send_message(channel, '{} > {} > {}'.format(date, headline, link))
                 else:
@@ -256,7 +257,7 @@ async def on_ready():
 async def on_message(message):
     if message.author == client.user:
         return
-
+ 
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
         return
 
@@ -339,29 +340,32 @@ def preload_news_items():
                               'September 01, 2017'))
     news_list.append(NewsItem('Garibaldi Financing Revised',
                               'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=803825&_Type=News-Releases&_Title=Garibaldi-Financing-Revised',
-                              'Sep 26, 2017, 19:33 ET'))
+                              'September 26, 2017'))
+    news_list.append(NewsItem('Garibaldi Closes With Strategic Investor',
+                              'http://www.garibaldiresources.com/s/NewsReleases.asp?ReportID=804286&_Type=News-Releases&_Title=Garibaldi-Closes-With-Strategic-Investor',
+                              'October 02, 2017'))
 
 def preload_stockwatch_items():
-    news_list.append(NewsItem('Garibaldi revises financing terms, grants options',
+    stockwatch_list.append(NewsItem('Garibaldi revises financing terms, grants options',
                               'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2509781&symbol=GGI&region=C',
                               '2017-09-26 19:24'))
-    news_list.append(NewsItem('SEDAR MD & A',
+    stockwatch_list.append(NewsItem('SEDAR MD & A',
                               'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2511512&symbol=GGI&region=C',
                               '2017-09-29 19:33'))
-    news_list.append(NewsItem('SEDAR Interim Financial Statements',
+    stockwatch_list.append(NewsItem('SEDAR Interim Financial Statements',
                               'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2511511&symbol=GGI&region=C',
                               '2017-09-29 19:33'))
-    news_list.append(NewsItem('Garibaldi closes $2.5M first tranche of placement',
+    stockwatch_list.append(NewsItem('Garibaldi closes $2.5M first tranche of placement',
                               'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2512115&symbol=GGI&region=C',
                               '2017-10-02 19:54'))
-    news_list.append(NewsItem('SEDAR Early Warning Report',
+    stockwatch_list.append(NewsItem('SEDAR Early Warning Report',
                               'https://www.stockwatch.com/News/Item.aspx?bid=Z-C%3aGGI-2512374&symbol=GGI&region=C',
                               '2017-10-03 10:52'))
-# preload_news_items()
+preload_news_items()
 preload_stockwatch_items()
 client.loop.create_task(get_stockwatch())
-# client.loop.create_task(get_company_news())
-# client.loop.create_task(get_news())
+client.loop.create_task(get_company_news())
+client.loop.create_task(get_news())
 client.loop.create_task(get_halted())
 # client.loop.create_task(get_email())
 client.run(token)
