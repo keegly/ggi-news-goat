@@ -255,10 +255,10 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    if 'newsgoat' in (word.lower() for word in message.content.split()):
+    if 'newsgoat' or 'goatbot' or 'newsbot' or 'haltbot' or 'haltgoat' in (word.lower() for word in message.content.split()):
         await client.send_message(message.channel, u"\U0001F410")
         return
- 
+
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
         return
 
@@ -379,7 +379,6 @@ def preload_stockwatch_items():
         rows = table("tr")[1:] # skip header, grab first 3
         for tr in rows:
             cols = tr("td")  # Equiv to .findAll("td")
-    
             headline = cols[5].string.strip()
             link = 'http://www.stockwatch.com' + cols[5].a.get('href')
             date = cols[0].string.strip()
