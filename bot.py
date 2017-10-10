@@ -255,7 +255,7 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    if 'newsgoat' or 'goatbot' or 'newsbot' or 'haltbot' or 'haltgoat' in (word.lower() for word in message.content.split()):
+    if 'newsgoat' in (word.lower() for word in message.content.split()):
         await client.send_message(message.channel, u"\U0001F410")
         return
 
