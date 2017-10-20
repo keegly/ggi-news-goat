@@ -18,7 +18,7 @@ stockwatch_list = [] # pylint: disable=C0103
 # ggi-price-actioon and private serv
 output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
                    discord.Object(id='354637284147986433')] # pylint: disable=C0103
-# output_channels = [discord.Object(id='355892436888715279')] # testing
+#output_channels = [discord.Object(id='355892436888715279')] # testing
 
 class NewsItem():
     def __init__(self, headline, link, date):
@@ -59,6 +59,7 @@ async def scrape(url):
                 elif r.status == 200:
                     logging.info("HTTP Request for %.22s... successful with status %d",
                                  url, r.status)
+                    logging.debug(r.headers)
                     soup = BeautifulSoup(await r.text(), 'lxml')
                 return soup
     except (aiohttp.ClientResponseError,
@@ -251,8 +252,13 @@ async def on_ready():
     await client.change_presence(game=discord.Game(name='Shit Just Goat Real'))
 
 @client.event
-async def on_message(message):
+async def on_message(message): 
     if message.author == client.user:
+        return
+
+    # connor or bebster
+    if message.author.id in ['165297510443646976', '354793851040563202']:
+        await client.add_reaction(message, u"\U0001F4A9")
         return
 
     if 'newsgoat' in (word.lower() for word in message.content.split()):
