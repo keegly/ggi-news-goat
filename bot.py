@@ -34,7 +34,6 @@ class NewsItem():
     time = ""
     link = ""
 
-
 class HaltItem():
     def __init__(self, text, link, date):
         self.date = date
@@ -256,9 +255,9 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    # connor or bebster
-    if message.author.id in ['165297510443646976', '354793851040563202']:
-        await client.add_reaction(message, u"\U0001F4A9")
+    # bebster
+    if message.author.id in ['354793851040563202']:
+        await client.add_reaction(message, u"\U0001F469\u200D\u2695\uFE0F")
         return
 
     if 'newsgoat' in (word.lower() for word in message.content.split()):
