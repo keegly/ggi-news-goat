@@ -255,9 +255,9 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    # bebster
+    # connor or bebster
     if message.author.id in ['354793851040563202']:
-        await client.add_reaction(message, u"\U0001F469\u200D\u2695\uFE0F")
+        await client.add_reaction(message, u"\U0001F415")
         return
 
     if 'newsgoat' in (word.lower() for word in message.content.split()):
