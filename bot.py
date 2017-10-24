@@ -248,7 +248,7 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('-------')
-    await client.change_presence(game=discord.Game(name='Shit Just Goat Real'))
+    await client.change_presence(game=discord.Game(name='Organic, Free Range, FLOW GOAT™ Approved'))
 
 @client.event
 async def on_message(message): 
@@ -256,9 +256,9 @@ async def on_message(message):
         return
 
     # connor or bebster
-    if message.author.id in ['354793851040563202']:
-        await client.add_reaction(message, u"\U0001F415")
-        return
+#    if message.author.id in ['354793851040563202']:
+#        await client.add_reaction(message, u"\U0001F415")
+#        return
 
     if 'newsgoat' in (word.lower() for word in message.content.split()):
         await client.send_message(message.channel, u"\U0001F410")
