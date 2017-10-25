@@ -248,17 +248,17 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('-------')
-    await client.change_presence(game=discord.Game(name='Shit Just Goat Real'))
+    await client.change_presence(game=discord.Game(name='Organic, Free Range, FLOW GOAT™ Approved'))
 
 @client.event
 async def on_message(message): 
     if message.author == client.user:
         return
 
-    # bebster
-    if message.author.id in ['354793851040563202']:
-        await client.add_reaction(message, u"\U0001F469\u200D\u2695\uFE0F")
-        return
+    # connor or bebster
+#    if message.author.id in ['354793851040563202']:
+#        await client.add_reaction(message, u"\U0001F415")
+#        return
 
     if 'newsgoat' in (word.lower() for word in message.content.split()):
         await client.send_message(message.channel, u"\U0001F410")
@@ -346,17 +346,22 @@ async def on_message(message):
 def init():
     # Configure logging
     logging.basicConfig(level=logging.INFO)
+    preload_news_items()
+    preload_stockwatch_items()
+    preload_halt_items()
 
 # TODO: preload news list from DB here?
 
 def preload_news_items():
     """ TODO: Do an inital scrape here to populate any existing news without outputting it to chat
               Because this is just poverty """
+    logging.info("Preloading Company Site Items.")
     url = 'http://www.garibaldiresources.com/s/NewsReleases.asp'
     soup = client.loop.run_until_complete(scrape(url))
     if soup is None: # HTTP req failed, so wait longer before trying again
         logging.info("Prefetching GGI/Newswire items failed.")
     else:
+        start = timer()
         table = soup.find_all('tr')[:5] # grab only the most recent 3
         for tr in table:
             cols = tr("td")  # Equiv to .findAll("td")
@@ -370,7 +375,9 @@ def preload_news_items():
             news = NewsItem(headline, link, date)
             if news not in news_list:
                 news_list.append(news)
-
+        end = timer()
+        logging.info("Company site preload complete in {:.2f}s".format(
+            (end - start)))
         news_list.reverse()
 
 def preload_stockwatch_items():
@@ -380,6 +387,7 @@ def preload_stockwatch_items():
     if soup is None: # HTTP req failed, so wait longer before trying again
         logging.info("Prefetching Stockwatch items failed.")
     else:
+        start = timer()
         table = soup.find(id="MainContent_NewsList1_Table1_Table1")
         rows = table("tr")[1:] # skip header, grab first 3
         for tr in rows:
@@ -393,6 +401,9 @@ def preload_stockwatch_items():
                 stockwatch_list.append(news)
 
         stockwatch_list.reverse()
+        end = timer()
+        logging.info("Stockwatch preload complete in {:.2f}s".format(
+        (end - start)))
 
 def preload_halt_items():
     logging.info("Preloading IIROC Halt Items.")
@@ -401,6 +412,7 @@ def preload_halt_items():
     if soup is None:    # failed HTTP req
         logging.info("Prefetching IIROC Halt items failed.")
     else:
+        start = timer()
         res = soup.find_all('div', {"class": "item"})
         for item in res:
             try:
@@ -415,11 +427,11 @@ def preload_halt_items():
                 halt = HaltItem(text, link, date)
                 if halt not in halt_list:
                     halt_list.append(halt)
+        end = timer()
+        logging.info("Halt search complete in {:.2f}s".format(
+            (end - start)))
 
 init()
-preload_news_items()
-preload_stockwatch_items()
-preload_halt_items()
 client.loop.create_task(get_stockwatch())
 client.loop.create_task(get_company_news())
 client.loop.create_task(get_news())
