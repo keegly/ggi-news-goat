@@ -271,16 +271,7 @@ async def on_message(message):
         logging.info("Command .recent received from %s (%s)", message.author, message.author.nick)
         output = ""
         if len(news_list) is 0:
-            num = randint(0, 10)
-            if num < 7:
-                output = "Wait a sec, what's this? Found some new GGI News!"
-                tmp = await client.send_message(message.channel, output)
-                await asyncio.sleep(4)
-                output = "Got your goat! Just kidding, still no news."
-                await client.edit_message(tmp, output)
-                return
-            else:
-                output = "No news for GGI."
+            output = "No news for GGI."
         for nr in news_list[-5:]:
             # post the most recent 5 items
             output += '{} > {} > {}\n'.format(nr.date, nr.headline, nr.link)
@@ -428,11 +419,10 @@ def preload_halt_items():
                 if halt not in halt_list:
                     halt_list.append(halt)
         end = timer()
-        logging.info("Halt search complete in {:.2f}s".format(
+        logging.info("Halt preload complete in {:.2f}s".format(
             (end - start)))
 
 init()
-
 client.loop.create_task(get_stockwatch())
 client.loop.create_task(get_company_news())
 client.loop.create_task(get_news())
