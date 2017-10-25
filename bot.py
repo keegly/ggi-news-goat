@@ -432,6 +432,7 @@ def preload_halt_items():
             (end - start)))
 
 init()
+
 client.loop.create_task(get_stockwatch())
 client.loop.create_task(get_company_news())
 client.loop.create_task(get_news())
