@@ -250,10 +250,10 @@ async def get_core_pics():
             start = timer()
             #table = soup.find_all('tr')
             #res = soup.find_all('div', {"class": "photoholder"})
-            thumbnails = soup.select('div.photoholder img[src]')
+            thumbnails = soup.select('div.photoholder a[href]')
             for thumbnail in thumbnails:
                 try:
-                    link = thumbnail['src']
+                    link = thumbnail['href']
                 except (AttributeError, IndexError) as exc:
                     logging.exception("Error Parsing HTML: %s", exc)
                     continue
