@@ -241,7 +241,7 @@ async def get_core_pics():
 
     while not client.is_closed:
         url = 'http://www.garibaldiresources.com/s/Photo_Gallery.asp?ReportID=768260'
-        sleep_time = randint(10, 25)
+        sleep_time = randint(30, 60)
         soup = await scrape(url)
         if soup is None:    # failed HTTP req
             sleep_time *= 2
@@ -505,10 +505,10 @@ def preload_core_pics():
         start = timer()
         #table = soup.find_all('tr')
         #res = soup.find_all('div', {"class": "photoholder"})
-        thumbnails = soup.select('div.photoholder img[src]')
+        thumbnails = soup.select('div.photoholder a[href]')
         for thumbnail in thumbnails:
             try:
-                link = thumbnail['src']
+                link = thumbnail['href']
             except (AttributeError, IndexError) as exc:
                 logging.exception("Error Parsing HTML: %s", exc)
                 continue
