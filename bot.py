@@ -15,6 +15,7 @@ token = "MzU3MTY5NTA5MzM4OTcyMTYx.DJl_ig.IBYtxryOuYyVHfl2ahXgfj6Nwt0"
 news_list = []       # pylint: disable=C0103
 halt_list = []       # pylint: disable=C0103
 stockwatch_list = [] # pylint: disable=C0103
+core_pics_list = [] # pylint: disable=C0103
 # ggi-price-actioon and private serv
 output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
                    discord.Object(id='354637284147986433')] # pylint: disable=C0103
@@ -234,6 +235,40 @@ async def get_halted():
 
         await asyncio.sleep(sleep_time)
 
+async def get_core_pics():
+    """ Parse company site and check for any new photo uploads """
+    await client.wait_until_ready()
+
+    while not client.is_closed:
+        url = 'http://www.garibaldiresources.com/s/Photo_Gallery.asp?ReportID=768260'
+        sleep_time = randint(10, 25)
+        soup = await scrape(url)
+        if soup is None:    # failed HTTP req
+            sleep_time *= 2
+            logging.info("Sleeping for %ds", sleep_time)
+        else:
+            start = timer()
+            #table = soup.find_all('tr')
+            #res = soup.find_all('div', {"class": "photoholder"})
+            thumbnails = soup.select('div.photoholder img[src]')
+            for thumbnail in thumbnails:
+                try:
+                    link = thumbnail['src']
+                except (AttributeError, IndexError) as exc:
+                    logging.exception("Error Parsing HTML: %s", exc)
+                    continue
+                if link not in core_pics_list:
+                    core_pics_list.append(link)
+                    logging.info("Found new GGI Core Picture")
+                    output = "New E&L Photo > http://www.garibaldiresources.com{}".format(link)
+                    for channel in output_channels:
+                        await client.send_message(channel, output)
+            end = timer()
+            logging.info("Core Pics update search complete in {:.2f}s, sleeping for {}s".format(
+                (end - start), sleep_time))
+
+        await asyncio.sleep(sleep_time)
+
 async def get_email():
     await client.wait_until_ready()
     while not client.is_closed:
@@ -338,10 +373,48 @@ def init():
     # Configure logging
     logging.basicConfig(level=logging.INFO)
     preload_news_items()
+    preload_newswire()
     preload_stockwatch_items()
     preload_halt_items()
+    preload_core_pics()
 
 # TODO: preload news list from DB here?
+
+def preload_newswire():
+    """ Parse newswire and see if they've any GGI releases for us """
+    logging.info("Preloading Newswire Items.")
+    url = 'http://www.newswire.ca/news-releases/all-public-company-news/' # ?c=n?page=1&pagesize=200
+    soup = client.loop.run_until_complete(scrape(url))
+    if soup is None: # HTTP req failed, so wait longer before trying again
+        logging.info("Newswire Preload Failed.")
+    else:
+        start = timer()
+        res = soup.find_all('div', {"class": "row"})[5:25]
+        for item in res:
+            try:
+                headline = item.contents[3].text.strip()
+                headline = headline.split("\n")[0]
+                link = item.contents[3].a.get("href")
+                date = item.contents[1].text.strip()
+            except (AttributeError, IndexError) as exc:
+                logging.exception("Error Parsing HTML: %s", exc)
+                continue
+
+            if "Garibaldi" in headline:  # found new NR
+                news = NewsItem(headline, link, date)
+                if news not in news_list:
+                    news_list.append(news)
+                else:
+                    logging.info("Skipping old news item (%s)", headline)
+            elif "GGI" in headline:  # halt/resumption notice
+                halt = HaltItem(headline, link, date)
+                if halt not in halt_list:
+                    halt_list.append(halt)
+                else:
+                    logging.info("Skipping old halt/resumption item (%s)", headline)
+        end = timer()
+        logging.info("Newswire preload complete in {:.2f}s."
+                        .format((end - start)))
 
 def preload_news_items():
     """ TODO: Do an inital scrape here to populate any existing news without outputting it to chat
@@ -394,7 +467,7 @@ def preload_stockwatch_items():
         stockwatch_list.reverse()
         end = timer()
         logging.info("Stockwatch preload complete in {:.2f}s".format(
-        (end - start)))
+            (end - start)))
 
 def preload_halt_items():
     logging.info("Preloading IIROC Halt Items.")
@@ -422,10 +495,34 @@ def preload_halt_items():
         logging.info("Halt preload complete in {:.2f}s".format(
             (end - start)))
 
+def preload_core_pics():
+    logging.info("Preloading Core Pics.")
+    url = 'http://www.garibaldiresources.com/s/Photo_Gallery.asp?ReportID=768260'
+    soup = client.loop.run_until_complete(scrape(url))
+    if soup is None:    # failed HTTP req
+        logging.info("Preloading Core Pics Failed!")
+    else:
+        start = timer()
+        #table = soup.find_all('tr')
+        #res = soup.find_all('div', {"class": "photoholder"})
+        thumbnails = soup.select('div.photoholder img[src]')
+        for thumbnail in thumbnails:
+            try:
+                link = thumbnail['src']
+            except (AttributeError, IndexError) as exc:
+                logging.exception("Error Parsing HTML: %s", exc)
+                continue
+            if link not in core_pics_list:
+                core_pics_list.append(link)
+        end = timer()
+        logging.info("Core Pics preload complete in {:.2f}s".format(
+            (end - start)))
+
 init()
 client.loop.create_task(get_stockwatch())
 client.loop.create_task(get_company_news())
 client.loop.create_task(get_news())
 client.loop.create_task(get_halted())
+client.loop.create_task(get_core_pics())
 # client.loop.create_task(get_email())
 client.run(token)
