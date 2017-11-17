@@ -16,10 +16,10 @@ news_list = []       # pylint: disable=C0103
 halt_list = []       # pylint: disable=C0103
 stockwatch_list = [] # pylint: disable=C0103
 core_pics_list = [] # pylint: disable=C0103
-# ggi-price-actioon and private serv
+# ggi-price-action and private serv
 output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
                    discord.Object(id='354637284147986433')] # pylint: disable=C0103
-#output_channels = [discord.Object(id='355892436888715279')] # testing
+# output_channels = [discord.Object(id='355892436888715279')] # testing
 
 class NewsItem():
     def __init__(self, headline, link, date):
@@ -85,6 +85,7 @@ async def get_stockwatch():
             logging.info("Sleeping for %ds", sleep_time)
         else:
             start = timer()
+            count = 0
             table = soup.find(id="MainContent_NewsList1_Table1_Table1")
             rows = table("tr")[1:] # skip header, grab first 3
             for tr in rows:
@@ -94,17 +95,18 @@ async def get_stockwatch():
                 link = 'http://www.stockwatch.com' + cols[5].a.get('href')
                 date = cols[0].string.strip()
 
+                count += 1
                 news = NewsItem(headline, link, date)
                 if news not in stockwatch_list:
                     stockwatch_list.append(news)
                     for channel in output_channels:
                         await client.send_message(channel, '{} > {} > {}'.format(date, headline, link))
                 else:
-                    logging.info("Skipping old news item (%s)", headline)
+                    logging.debug("Skipping old news item (%s)", headline)
 
             end = timer()
-            logging.info("Stockwatch search complete in {:.2f}s, sleeping for {}s."
-                         .format((end - start), sleep_time))
+            logging.info("Stockwatch search complete in {:.2f}s, found {} items. Sleeping for {}s."
+                         .format((end - start), count, sleep_time))
         await asyncio.sleep(sleep_time)
 
 async def get_news():
@@ -119,7 +121,8 @@ async def get_news():
             logging.info("Sleeping for %ds", sleep_time)
         else:
             start = timer()
-            res = soup.find_all('div', {"class": "row"})[5:25]
+            count = 0
+            res = soup.find_all('div', {"class": "row"})[3:23]
             for item in res:
                 try:
                     headline = item.contents[3].text.strip()
@@ -132,6 +135,7 @@ async def get_news():
 
                 if "Garibaldi" in headline:  # found new NR
                     news = NewsItem(headline, link, date)
+                    count += 1
                     if news not in news_list:
                         news_list.append(news)
                         logging.info("Found new GGI release!!")
@@ -140,8 +144,9 @@ async def get_news():
                         for channel in output_channels:
                             await client.send_message(channel, output)
                     else:
-                        logging.info("Skipping old news item (%s)", headline)
+                        logging.debug("Skipping old news item (%s)", headline)
                 elif "GGI" in headline:  # halt/resumption notice
+                    count += 1
                     halt = HaltItem(headline, link, date)
                     if halt not in halt_list:
                         halt_list.append(halt)
@@ -151,10 +156,10 @@ async def get_news():
                         for channel in output_channels:
                             await client.send_message(channel, output)
                     else:
-                        logging.info("Skipping old halt/resumption item (%s)", headline)
+                        logging.debug("Skipping old halt/resumption item (%s)", headline)
             end = timer()
-            logging.info("Newswire update search complete in {:.2f}s, sleeping for {}s."
-                         .format((end - start), sleep_time))
+            logging.info("Newswire update search complete in {:.2f}s, found {} items. Sleeping for {}s."
+                         .format((end - start), count, sleep_time))
 
         await asyncio.sleep(sleep_time)
 
@@ -170,6 +175,7 @@ async def get_company_news():
             logging.info("Sleeping for %ds", sleep_time)
         else:
             start = timer()
+            count = 0
             table = soup.find_all('tr')[:3] # grab only the most recent 3
             for tr in table:
                 cols = tr("td")  # Equiv to .findAll("td")
@@ -180,6 +186,7 @@ async def get_company_news():
                 except (AttributeError, IndexError) as exc:
                     logging.exception("Error Parsing HTML: %s", exc)
                     continue
+                count += 1
                 news = NewsItem(headline, link, date)
                 if news not in news_list:
                     news_list.append(news)
@@ -188,11 +195,11 @@ async def get_company_news():
                     for channel in output_channels:
                         await client.send_message(channel, output)
                 else:
-                    logging.info("Skipping old news item (%s)", headline)
+                    logging.debug("Skipping old news item (%s)", headline)
 
             end = timer()
-            logging.info("Company site update search complete in {:.2f}s, sleeping for {}s."
-                         .format((end - start), sleep_time))
+            logging.info("Company site update search complete in {:.2f}s, found {} items. Sleeping for {}s."
+                         .format((end - start), count, sleep_time))
 
         await asyncio.sleep(sleep_time)
 
@@ -203,12 +210,14 @@ async def get_halted():
     while not client.is_closed:
         url = 'http://iiroc.mediaroom.com'
         sleep_time = randint(10, 25)
+        # TODO: check current time and if markets closed (+- 10m), make delay longer (10m?)
         soup = await scrape(url)
         if soup is None:    # failed HTTP req
             sleep_time *= 2
             logging.info("Sleeping for %ds", sleep_time)
         else:
             start = timer()
+            count = 0
             res = soup.find_all('div', {"class": "item"})
             for item in res:
                 try:
@@ -220,6 +229,7 @@ async def get_halted():
                     continue
 
                 if 'GGI' in text:
+                    count += 1
                     halt = HaltItem(text, link, date)
                     if halt not in halt_list:
                         halt_list.append(halt)
@@ -228,10 +238,10 @@ async def get_halted():
                         for channel in output_channels:
                             await client.send_message(channel, output)
                     else:
-                        logging.info("Skipping old halt/resumption item (%s)", text)
+                        logging.debug("Skipping old halt/resumption item (%s)", text)
             end = timer()
-            logging.info("Halt search complete in {:.2f}s, sleeping for {}s".format(
-                (end - start), sleep_time))
+            logging.info("Halt search complete in {:.2f}s, found {} items. Sleeping for {}s".format(
+                (end - start), count, sleep_time))
 
         await asyncio.sleep(sleep_time)
 
@@ -248,6 +258,7 @@ async def get_core_pics():
             logging.info("Sleeping for %ds", sleep_time)
         else:
             start = timer()
+            count = 0
             #table = soup.find_all('tr')
             #res = soup.find_all('div', {"class": "photoholder"})
             thumbnails = soup.select('div.photoholder a[href]')
@@ -257,6 +268,7 @@ async def get_core_pics():
                 except (AttributeError, IndexError) as exc:
                     logging.exception("Error Parsing HTML: %s", exc)
                     continue
+                count += 1
                 if link not in core_pics_list:
                     core_pics_list.append(link)
                     logging.info("Found new GGI Core Picture")
@@ -264,8 +276,8 @@ async def get_core_pics():
                     for channel in output_channels:
                         await client.send_message(channel, output)
             end = timer()
-            logging.info("Core Pics update search complete in {:.2f}s, sleeping for {}s".format(
-                (end - start), sleep_time))
+            logging.info("Core Pics update search complete in {:.2f}s, found {} items. Sleeping for {}s".format(
+                (end - start), count, sleep_time))
 
         await asyncio.sleep(sleep_time)
 
@@ -389,7 +401,8 @@ def preload_newswire():
         logging.info("Newswire Preload Failed.")
     else:
         start = timer()
-        res = soup.find_all('div', {"class": "row"})[5:25]
+        res = soup.find_all('div', {"class": "row"})[3:23]
+        count = 0
         for item in res:
             try:
                 headline = item.contents[3].text.strip()
@@ -403,18 +416,20 @@ def preload_newswire():
             if "Garibaldi" in headline:  # found new NR
                 news = NewsItem(headline, link, date)
                 if news not in news_list:
+                    count += 1
                     news_list.append(news)
                 else:
                     logging.info("Skipping old news item (%s)", headline)
             elif "GGI" in headline:  # halt/resumption notice
                 halt = HaltItem(headline, link, date)
                 if halt not in halt_list:
+                    count += 1
                     halt_list.append(halt)
                 else:
                     logging.info("Skipping old halt/resumption item (%s)", headline)
         end = timer()
-        logging.info("Newswire preload complete in {:.2f}s."
-                        .format((end - start)))
+        logging.info("Newswire preload complete in {:.2f}s, fetched {} items"
+                        .format((end - start), count))
 
 def preload_news_items():
     """ TODO: Do an inital scrape here to populate any existing news without outputting it to chat
@@ -427,6 +442,7 @@ def preload_news_items():
     else:
         start = timer()
         table = soup.find_all('tr')[:5] # grab only the most recent 3
+        count = 0
         for tr in table:
             cols = tr("td")  # Equiv to .findAll("td")
             try:
@@ -438,10 +454,11 @@ def preload_news_items():
                 continue
             news = NewsItem(headline, link, date)
             if news not in news_list:
+                count += 1
                 news_list.append(news)
         end = timer()
-        logging.info("Company site preload complete in {:.2f}s".format(
-            (end - start)))
+        logging.info("Company site preload complete in {:.2f}s, fetched {} items".format(
+            (end - start), count))
         news_list.reverse()
 
 def preload_stockwatch_items():
@@ -454,6 +471,7 @@ def preload_stockwatch_items():
         start = timer()
         table = soup.find(id="MainContent_NewsList1_Table1_Table1")
         rows = table("tr")[1:] # skip header, grab first 3
+        count = 0
         for tr in rows:
             cols = tr("td")  # Equiv to .findAll("td")
             headline = cols[5].string.strip()
@@ -462,12 +480,13 @@ def preload_stockwatch_items():
 
             news = NewsItem(headline, link, date)
             if news not in stockwatch_list:
+                count += 1
                 stockwatch_list.append(news)
 
         stockwatch_list.reverse()
         end = timer()
-        logging.info("Stockwatch preload complete in {:.2f}s".format(
-            (end - start)))
+        logging.info("Stockwatch preload complete in {:.2f}s, fetched {} items".format(
+            (end - start), count))
 
 def preload_halt_items():
     logging.info("Preloading IIROC Halt Items.")
@@ -478,6 +497,7 @@ def preload_halt_items():
     else:
         start = timer()
         res = soup.find_all('div', {"class": "item"})
+        count = 0
         for item in res:
             try:
                 date = item.contents[1].string.strip()
@@ -490,10 +510,11 @@ def preload_halt_items():
             if 'GGI' in text:
                 halt = HaltItem(text, link, date)
                 if halt not in halt_list:
+                    count += 1
                     halt_list.append(halt)
         end = timer()
-        logging.info("Halt preload complete in {:.2f}s".format(
-            (end - start)))
+        logging.info("Halt preload complete in {:.2f}s, fetched {} items".format(
+            (end - start), count))
 
 def preload_core_pics():
     logging.info("Preloading Core Pics.")
@@ -506,6 +527,7 @@ def preload_core_pics():
         #table = soup.find_all('tr')
         #res = soup.find_all('div', {"class": "photoholder"})
         thumbnails = soup.select('div.photoholder a[href]')
+        count = 0
         for thumbnail in thumbnails:
             try:
                 link = thumbnail['href']
@@ -513,10 +535,11 @@ def preload_core_pics():
                 logging.exception("Error Parsing HTML: %s", exc)
                 continue
             if link not in core_pics_list:
+                count += 1
                 core_pics_list.append(link)
         end = timer()
-        logging.info("Core Pics preload complete in {:.2f}s".format(
-            (end - start)))
+        logging.info("Core Pics preload complete in {:.2f}s, fetched {} pics".format(
+            (end - start), count))
 
 init()
 client.loop.create_task(get_stockwatch())
