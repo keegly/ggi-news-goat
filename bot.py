@@ -89,12 +89,16 @@ async def get_stockwatch():
             table = soup.find(id="MainContent_NewsList1_Table1_Table1")
             rows = table("tr")[1:] # skip header, grab first 3
             for tr in rows:
-                cols = tr("td")  # Equiv to .findAll("td")
-
-                headline = cols[5].string.strip()
-                link = 'http://www.stockwatch.com' + cols[5].a.get('href')
-                date = cols[0].string.strip()
-
+                try:
+                    cols = tr("td")  # Equiv to .findAll("td")
+                    headline = cols[5].string.strip()
+                    link = 'http://www.stockwatch.com' + cols[5].a.get('href')
+                    date = cols[0].string.strip()
+                    # halt = cols[4].string.strip().lower() # is halt/resumption or just normal NR
+                except (AttributeError, IndexError) as exc:
+                    logging.exception("Error Parsing HTML: %s", exc)
+                    continue
+                # TODO: determine if halt and if so store in halt list to reduce duplication of alerts
                 count += 1
                 news = NewsItem(headline, link, date)
                 if news not in stockwatch_list:
