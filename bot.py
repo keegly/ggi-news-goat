@@ -391,7 +391,7 @@ def init():
     preload_news_items()
     preload_newswire()
     preload_stockwatch_items()
-    preload_halt_items()
+    # preload_halt_items()
     preload_core_pics()
 
 # TODO: preload news list from DB here?
@@ -549,7 +549,7 @@ init()
 client.loop.create_task(get_stockwatch())
 client.loop.create_task(get_company_news())
 client.loop.create_task(get_news())
-client.loop.create_task(get_halted())
+# client.loop.create_task(get_halted())
 client.loop.create_task(get_core_pics())
 # client.loop.create_task(get_email())
 client.run(token)
