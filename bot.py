@@ -17,9 +17,9 @@ halt_list = []       # pylint: disable=C0103
 stockwatch_list = [] # pylint: disable=C0103
 core_pics_list = [] # pylint: disable=C0103
 # ggi-price-action and private serv
-#output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
-#                   discord.Object(id='354637284147986433')] # pylint: disable=C0103
-output_channels = [discord.Object(id='355892436888715279')] # testing
+output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
+                   discord.Object(id='354637284147986433')] # pylint: disable=C0103
+#output_channels = [discord.Object(id='355892436888715279')] # testing
 
 class NewsItem():
     def __init__(self, headline, link, date):
