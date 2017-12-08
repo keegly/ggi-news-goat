@@ -17,9 +17,9 @@ halt_list = []       # pylint: disable=C0103
 stockwatch_list = [] # pylint: disable=C0103
 core_pics_list = [] # pylint: disable=C0103
 # ggi-price-action and private serv
-output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
-                   discord.Object(id='354637284147986433')] # pylint: disable=C0103
-# output_channels = [discord.Object(id='355892436888715279')] # testing
+#output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
+#                   discord.Object(id='354637284147986433')] # pylint: disable=C0103
+output_channels = [discord.Object(id='355892436888715279')] # testing
 
 class NewsItem():
     def __init__(self, headline, link, date):
@@ -276,7 +276,7 @@ async def get_core_pics():
                 if link not in core_pics_list:
                     core_pics_list.append(link)
                     logging.info("Found new GGI Core Picture")
-                    output = "New E&L Photo > http://www.garibaldiresources.com{}".format(link)
+                    output = ":loudspeaker: :regional_indicator_c: :regional_indicator_o: :regional_indicator_r: :regional_indicator_e: :eggplant: :regional_indicator_p: :regional_indicator_o: :regional_indicator_r: :regional_indicator_n: :loudspeaker: > http://www.garibaldiresources.com{}".format(link)
                     for channel in output_channels:
                         await client.send_message(channel, output)
             end = timer()
@@ -318,6 +318,10 @@ async def on_message(message):
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
         return
 
+    if message.content.startswith('.coreporn'):
+        logging.info("Command .coreporn received from %s (%s)", message.author, message.author.nick)
+        output = ":loudspeaker: :regional_indicator_c: :regional_indicator_o: :regional_indicator_r: :regional_indicator_e: :eggplant: :regional_indicator_p: :regional_indicator_o: :regional_indicator_r: :regional_indicator_n: :loudspeaker:"
+        await client.send_message(message.channel, output)
     if message.content.startswith('.recent'):
         logging.info("Command .recent received from %s (%s)", message.author, message.author.nick)
         output = ""
