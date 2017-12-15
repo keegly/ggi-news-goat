@@ -311,8 +311,8 @@ async def on_message(message):
 #        await client.add_reaction(message, u"\U0001F415")
 #        return
 
-    if 'newsgoat' in (word.lower() for word in message.content.split()):
-        await client.send_message(message.channel, u"\U0001F410")
+    if any(word in 'newsgoat goat goatbot'.split() for word in message.content.split()):
+        await client.add_reaction(message, u"\U0001F410")
         return
 
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
@@ -322,6 +322,7 @@ async def on_message(message):
         logging.info("Command .coreporn received from %s (%s)", message.author, message.author.nick)
         output = ":loudspeaker: :regional_indicator_c: :regional_indicator_o: :regional_indicator_r: :regional_indicator_e: :eggplant: :regional_indicator_p: :regional_indicator_o: :regional_indicator_r: :regional_indicator_n: :loudspeaker:"
         await client.send_message(message.channel, output)
+    
     if message.content.startswith('.recent'):
         logging.info("Command .recent received from %s (%s)", message.author, message.author.nick)
         output = ""
