@@ -16,9 +16,10 @@ news_list = []       # pylint: disable=C0103
 halt_list = []       # pylint: disable=C0103
 stockwatch_list = [] # pylint: disable=C0103
 core_pics_list = [] # pylint: disable=C0103
-# ggi-price-action and private serv
+# ggi-price-action, private serv, Exchange 2.0
 output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
-                   discord.Object(id='354637284147986433')] # pylint: disable=C0103
+                   discord.Object(id='354637284147986433'),
+                   discord.Object(id='402575619755606026')] # pylint: disable=C0103
 #output_channels = [discord.Object(id='355892436888715279')] # testing
 
 class NewsItem():
@@ -299,7 +300,7 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('-------')
-    await client.change_presence(game=discord.Game(name='FLOW GOAT™ Baaaaahd'))
+    await client.change_presence(game=discord.Game(name='Newsletter Writer Simulator'))
 
 @client.event
 async def on_message(message): 
@@ -310,10 +311,11 @@ async def on_message(message):
 #    if message.author.id in ['354793851040563202']:
 #        await client.add_reaction(message, u"\U0001F415")
 #        return
+    if message.author.id in ['354641338471546884']:
+        await client.add_reaction(message, u"\U0001F41D")
 
-    if any(word in 'newsgoat goat goatbot'.split() for word in message.content.split()):
+    if any(word in 'newsgoat goat goatbot'.split() for word in message.content.lower().split()):
         await client.add_reaction(message, u"\U0001F410")
-        return
 
     if message.author.id not in ['236291672655396864', '354632104090271746', '354636345479528448']:
         return
