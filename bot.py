@@ -300,7 +300,7 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('-------')
-    await client.change_presence(game=discord.Game(name='Newsletter Writer Simulator'))
+    # await client.change_presence(game=discord.Game(name=''))
 
 @client.event
 async def on_message(message): 
@@ -311,8 +311,9 @@ async def on_message(message):
 #    if message.author.id in ['354793851040563202']:
 #        await client.add_reaction(message, u"\U0001F415")
 #        return
-    if message.author.id in ['354641338471546884']:
-        await client.add_reaction(message, u"\U0001F41D")
+    # bumblebee
+    # if message.author.id in ['354641338471546884']:
+    #    await client.add_reaction(message, u"\U0001F41D")
 
     if any(word in 'newsgoat goat goatbot'.split() for word in message.content.lower().split()):
         await client.add_reaction(message, u"\U0001F410")
