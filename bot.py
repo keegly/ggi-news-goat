@@ -92,8 +92,8 @@ async def get_stockwatch():
             for tr in rows:
                 try:
                     cols = tr("td")  # Equiv to .findAll("td")
-                    headline = cols[5].string.strip()
-                    link = 'http://www.stockwatch.com' + cols[5].a.get('href')
+                    headline = cols[4].string.strip()
+                    link = 'http://www.stockwatch.com' + cols[4].a.get('href')
                     date = cols[0].string.strip()
                     # halt = cols[4].string.strip().lower() # is halt/resumption or just normal NR
                 except (AttributeError, IndexError) as exc:
@@ -397,7 +397,7 @@ def init():
     # Configure logging
     logging.basicConfig(level=logging.INFO)
     preload_news_items()
-    preload_newswire()
+    #preload_newswire()
     preload_stockwatch_items()
     # preload_halt_items()
     preload_core_pics()
@@ -417,6 +417,8 @@ def preload_newswire():
         count = 0
         for item in res:
             try:
+                print(item.contents[1].text.strip())
+                print(item.contents[0].text.strip())
                 headline = item.contents[3].text.strip()
                 headline = headline.split("\n")[0]
                 link = item.contents[3].a.get("href")
@@ -556,7 +558,7 @@ def preload_core_pics():
 init()
 client.loop.create_task(get_stockwatch())
 client.loop.create_task(get_company_news())
-client.loop.create_task(get_news())
+#client.loop.create_task(get_news())
 # client.loop.create_task(get_halted())
 client.loop.create_task(get_core_pics())
 # client.loop.create_task(get_email())
