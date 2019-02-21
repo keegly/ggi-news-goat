@@ -486,8 +486,8 @@ def preload_stockwatch_items():
         count = 0
         for tr in rows:
             cols = tr("td")  # Equiv to .findAll("td")
-            headline = cols[5].string.strip()
-            link = 'http://www.stockwatch.com' + cols[5].a.get('href')
+            headline = cols[4].string.strip()
+            link = 'http://www.stockwatch.com' + cols[4].a.get('href')
             date = cols[0].string.strip()
 
             news = NewsItem(headline, link, date)
