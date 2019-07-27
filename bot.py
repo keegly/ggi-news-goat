@@ -10,7 +10,6 @@ import aiohttp
 description = """a GGI news feed bot"""
 
 client = discord.Client()
-token = "MzU3MTY5NTA5MzM4OTcyMTYx.DJl_ig.IBYtxryOuYyVHfl2ahXgfj6Nwt0"
 
 news_list = []       # pylint: disable=C0103
 halt_list = []       # pylint: disable=C0103
@@ -388,7 +387,7 @@ def init():
     # Configure logging
     logging.basicConfig(level=logging.INFO)
     preload_news_items()
-    preload_newswire()
+    # preload_newswire()
     preload_stockwatch_items()
     # preload_halt_items()
     preload_core_pics()
