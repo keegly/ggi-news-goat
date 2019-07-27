@@ -16,7 +16,6 @@ news_list = []       # pylint: disable=C0103
 halt_list = []       # pylint: disable=C0103
 stockwatch_list = [] # pylint: disable=C0103
 core_pics_list = [] # pylint: disable=C0103
-# ggi-price-action, private serv, Exchange 2.0
 output_channels = [discord.Object(id='365150978439381004'), # pylint: disable=C0103
                    discord.Object(id='354637284147986433'),
                    discord.Object(id='402575619755606026')] # pylint: disable=C0103
@@ -307,14 +306,6 @@ async def on_message(message):
     if message.author == client.user:
         return
 
-    # connor or bebster
-#    if message.author.id in ['354793851040563202']:
-#        await client.add_reaction(message, u"\U0001F415")
-#        return
-    # bumblebee
-    # if message.author.id in ['354641338471546884']:
-    #    await client.add_reaction(message, u"\U0001F41D")
-
     if any(word in 'newsgoat goat goatbot'.split() for word in message.content.lower().split()):
         await client.add_reaction(message, u"\U0001F410")
 
@@ -397,7 +388,7 @@ def init():
     # Configure logging
     logging.basicConfig(level=logging.INFO)
     preload_news_items()
-    #preload_newswire()
+    preload_newswire()
     preload_stockwatch_items()
     # preload_halt_items()
     preload_core_pics()
@@ -413,7 +404,7 @@ def preload_newswire():
         logging.info("Newswire Preload Failed.")
     else:
         start = timer()
-        res = soup.find_all('div', {"class": "row"})[3:23]
+        res = soup.find_all('div', {"class": "col-sm-8 col-lg-9 pull-left card"})#[3:23]
         count = 0
         for item in res:
             try:
